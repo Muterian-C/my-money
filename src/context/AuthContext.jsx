@@ -5,93 +5,71 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Start with loading = true
 
   // Load user on app start
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem("token");
+      console.log("Loading user, token exists:", !!token);
 
       if (!token) {
+        console.log("No token, setting loading to false");
         setLoading(false);
         return;
       }
 
       try {
+        console.log("Verifying token with backend...");
         const response = await API.get("/auth/me");
-        setUser(response.data);  // Backend returns user object directly
+        console.log("User loaded:", response.data);
+        setUser(response.data);
       } catch (error) {
-        console.error("Auth check failed:", error);
-        localStorage.removeItem("token");
+        console.error("Auth check failed:", error.response?.status);
+        // Only clear token if it's an auth error
+        if (error.response?.status === 401 || error.response?.status === 422) {
+          localStorage.removeItem("token");
+        }
         setUser(null);
       } finally {
-        setLoading(false);
+        setLoading(false); // Always set loading to false when done
       }
     };
 
     loadUser();
   }, []);
 
-  // Login
   const login = async (email, password) => {
     try {
-      const response = await API.post("/auth/login", {
-        email,
-        password,
-      });
-
+      const response = await API.post("/auth/login", { email, password });
       const { access_token, user } = response.data;
-
-      // Save JWT token
       localStorage.setItem("token", access_token);
-
-      // Save user state
       setUser(user);
-
-      return {
-        success: true,
-        user: user,
-      };
+      return { success: true, user };
     } catch (error) {
-      console.error("Login error:", error);
-      return {
-        success: false,
-        message: error.response?.data?.error || "Login failed",
-      };
+      console.error("Login error:", error.response?.data);
+      return { success: false, message: error.response?.data?.error || "Login failed" };
     }
   };
 
-  // Register
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, payDay = 28) => {
     try {
       const response = await API.post("/auth/register", {
         name,
         email,
         password,
+        pay_day: payDay,
       });
-
       const { access_token, user } = response.data;
-
-      // Save token
       localStorage.setItem("token", access_token);
-
-      // Save user
       setUser(user);
-
-      return {
-        success: true,
-        user: user,
-      };
+      return { success: true, user };
     } catch (error) {
-      console.error("Registration error:", error);
-      return {
-        success: false,
-        message: error.response?.data?.error || "Registration failed",
-      };
+      console.error("Registration error:", error.response?.data);
+      return { success: false, message: error.response?.data?.error || "Registration failed" };
     }
   };
 
-  // Logout
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
