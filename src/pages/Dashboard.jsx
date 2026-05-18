@@ -1,4 +1,5 @@
 import { useApp } from "../App";
+import { useAuth } from "../context/AuthContext";
 import {
   PieChart,
   Pie,
@@ -38,8 +39,8 @@ const CATEGORY_LABELS = {
 };
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const {
-    user,
     expenses,
     totalIncome,
     totalExpenses,
@@ -117,7 +118,7 @@ export default function Dashboard() {
       <div className="flex justify-between items-start pt-5">
         <div>
           <h1 className="text-xl font-bold">
-            Hey, {user.name.split(" ")[0]} 👋
+            Hey, {user?.name?.split(" ")[0] || "there"} 👋
           </h1>
           <p className="text-xs text-gray-500">
             Your financial snapshot
