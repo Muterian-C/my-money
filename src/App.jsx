@@ -12,6 +12,7 @@ import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AffordabilityTool from "./pages/AffordabilityTool";
 import NavBar from "./components/NavBar";
+import GoogleCallback from "./pages/GoogleCallback";
 
 import { incomeService } from "./services/incomeService";
 import { expenseService } from "./services/expenseService";
@@ -24,6 +25,7 @@ const AUTH_PAGES = ["landing", "auth"];
 const VALID_APP_PAGES = [
   "dashboard", "expenses", "income",
   "savings", "insights", "afford", "settings",
+  "google-callback",
 ];
 
 export default function App() {
@@ -70,6 +72,28 @@ export default function App() {
       localStorage.setItem("lastPage", page);
     }
   }, [page]);
+
+  // ─────────────────────────────────────
+  // HANDLE GOOGLE OAUTH CALLBACK URL
+  // ─────────────────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const error = params.get('error');
+    
+    if (token || error) {
+      // We're in the callback page
+      setPage("google-callback");
+      
+      if (token) {
+        localStorage.setItem('token', token);
+        // Short delay then reload to trigger auth
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      }
+    }
+  }, []);
 
   // ─────────────────────────────────────
   // HANDLE AUTHENTICATION STATE
@@ -250,6 +274,11 @@ export default function App() {
   // PAGE RENDERING
   // ─────────────────────────────────────
   const renderPage = () => {
+    // Special case for Google callback
+    if (page === "google-callback") {
+      return <GoogleCallback />;
+    }
+
     if (!isAuthenticated) {
       if (page === "auth") {
         return <AuthPage onLogin={handleLogin} />;
