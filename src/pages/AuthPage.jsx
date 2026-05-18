@@ -260,7 +260,7 @@ export default function AuthPage({ onLogin }) {
           {/* DEMO BUTTON - Enhanced with hover effect */}
           
 
-// In your AuthPage component, add this where you want the button:
+{/* // In your AuthPage component, add this where you want the button: */}
 
 <div className="relative my-4">
   <div className="absolute inset-0 flex items-center">
