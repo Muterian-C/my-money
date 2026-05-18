@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 
 export default function GoogleLogin({ onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
-  const { login: authLogin } = useAuth();
 
   const handleGoogleLogin = () => {
     setLoading(true);
@@ -25,26 +23,48 @@ export default function GoogleLogin({ onSuccess, onError }) {
             `width=${width},height=${height},left=${left},top=${top}`
           );
           
+          // Check popup status periodically
+          const checkPopup = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkPopup);
+              setLoading(false);
+            }
+          }, 500);
+          
           // Listen for message from popup
-          window.addEventListener('message', async (event) => {
+          const handleMessage = async (event) => {
+            // Allow messages from your domain
             if (event.origin !== window.location.origin) return;
             
             if (event.data.type === 'google_auth_success') {
+              clearInterval(checkPopup);
+              window.removeEventListener('message', handleMessage);
               popup?.close();
-              const { access_token, user } = event.data;
-              localStorage.setItem('token', access_token);
-              onSuccess?.(user);
-              window.location.reload();
+              
+              const { token, user } = event.data;
+              if (token) {
+                localStorage.setItem('token', token);
+                if (onSuccess) onSuccess(user);
+                window.location.reload();
+              } else {
+                if (onError) onError('No token received');
+              }
+              setLoading(false);
             } else if (event.data.type === 'google_auth_error') {
-              onError?.(event.data.error);
+              clearInterval(checkPopup);
+              window.removeEventListener('message', handleMessage);
+              popup?.close();
+              if (onError) onError(event.data.error);
+              setLoading(false);
             }
-            setLoading(false);
-          });
+          };
+          
+          window.addEventListener('message', handleMessage);
         }
       })
       .catch(err => {
         console.error('Google login error:', err);
-        onError?.('Failed to initialize Google login');
+        if (onError) onError('Failed to initialize Google login');
         setLoading(false);
       });
   };
@@ -56,7 +76,7 @@ export default function GoogleLogin({ onSuccess, onError }) {
       className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 disabled:opacity-50"
     >
       {loading ? (
-        <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-gray-300 border-t-emerald-500 rounded-full animate-spin" />
       ) : (
         <>
           <svg className="w-5 h-5" viewBox="0 0 24 24">
