@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../App";
+import { expenseService } from "../services/expenseService";
 import { motion, AnimatePresence } from "framer-motion";
 
 const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
@@ -27,10 +28,11 @@ const FILTERS = [
 ];
 
 export default function ExpensesPage() {
-  const { expenses, setExpenses, totalExpenses } = useApp();
+  const { expenses, setExpenses, refetchData, dataLoading } = useApp();
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [selectedExpense, setSelectedExpense] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     description: "",
     amount: "",
@@ -39,7 +41,6 @@ export default function ExpensesPage() {
     date: new Date().toISOString().split("T")[0],
   });
 
-  // Calculate totals by type
   const fixedTotal = expenses
     .filter(e => e.type === "fixed")
     .reduce((sum, e) => sum + e.amount, 0);
@@ -55,35 +56,54 @@ export default function ExpensesPage() {
     return e.category === filter;
   });
 
-  const addExpense = () => {
-    if (!form.description || !form.amount) return;
+  const addExpense = async () => {
+    if (!form.description || !form.amount) {
+      setError("Please fill in all fields");
+      return;
+    }
 
-    const categoryData = CATEGORIES.find(c => c.id === form.category);
+    setLoading(true);
+    setError("");
     
-    setExpenses((prev) => [
-      {
-        id: Date.now(),
-        ...form,
+    try {
+      await expenseService.add({
+        description: form.description,
         amount: parseFloat(form.amount),
-        type: categoryData?.type || "variable",
-        date: form.date || new Date().toISOString().split("T")[0],
-      },
-      ...prev,
-    ]);
-
-    setForm({
-      description: "",
-      amount: "",
-      category: "food",
-      type: "variable",
-      date: new Date().toISOString().split("T")[0],
-    });
-    setShowForm(false);
+        category: form.category,
+        type: form.type,
+        date: form.date,
+      });
+      
+      await refetchData(); // Refresh data from backend
+      
+      setForm({
+        description: "",
+        amount: "",
+        category: "food",
+        type: "variable",
+        date: new Date().toISOString().split("T")[0],
+      });
+      setShowForm(false);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to add expense");
+      console.error("Add expense error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteExpense = (id) => {
-    if (window.confirm("Are you sure you want to delete this expense?")) {
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
+  const deleteExpense = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this expense?")) return;
+    
+    setLoading(true);
+    try {
+      await expenseService.delete(id);
+      await refetchData(); // Refresh data from backend
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to delete expense");
+      console.error("Delete expense error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,6 +116,17 @@ export default function ExpensesPage() {
     const cat = CATEGORIES.find(c => c.id === categoryId);
     return cat ? cat.color : "#888";
   };
+
+  if (dataLoading && expenses.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading expenses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
@@ -114,41 +145,48 @@ export default function ExpensesPage() {
           </p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
+            ⚠️ {error}
+          </div>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gradient-to-br from-rose-500 to-pink-500 rounded-2xl p-5 text-white shadow-lg">
             <div className="text-xs opacity-90 mb-1">Total Spending</div>
-            <div className="text-2xl font-bold">{fmt(totalExpenses)}</div>
+            <div className="text-2xl font-bold">{fmt(expenses.reduce((s, e) => s + e.amount, 0))}</div>
             <div className="text-xs opacity-80 mt-2">All time</div>
           </div>
           
           <div className="bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl p-5 text-white shadow-lg">
             <div className="text-xs opacity-90 mb-1">Fixed Expenses</div>
             <div className="text-2xl font-bold">{fmt(fixedTotal)}</div>
-            <div className="text-xs opacity-80 mt-2">Monthly bills & subscriptions</div>
+            <div className="text-xs opacity-80 mt-2">Monthly bills</div>
           </div>
           
           <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-5 text-white shadow-lg">
             <div className="text-xs opacity-90 mb-1">Variable Expenses</div>
             <div className="text-2xl font-bold">{fmt(variableTotal)}</div>
-            <div className="text-xs opacity-80 mt-2">Daily spending & leisure</div>
+            <div className="text-xs opacity-80 mt-2">Daily spending</div>
           </div>
         </div>
 
         {/* Add Expense Button */}
         <button
           onClick={() => setShowForm(true)}
-          className="group relative w-full bg-gradient-to-r from-rose-500 to-orange-500 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 mb-6 overflow-hidden"
+          disabled={loading}
+          className="group relative w-full bg-gradient-to-r from-rose-500 to-orange-500 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 mb-6 overflow-hidden disabled:opacity-50"
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             <span className="text-xl">+</span> Add New Expense
           </span>
-          <div className="absolute inset-0 bg-gradient-to-r from-rose-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </button>
 
         {/* Filters */}
         <div className="mb-6">
-          <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          <div className="flex gap-2 overflow-x-auto pb-2">
             {FILTERS.map((f) => (
               <button
                 key={f.id}
@@ -159,7 +197,6 @@ export default function ExpensesPage() {
                     : "bg-white/60 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
-                {f.icon && <span className="mr-1">{f.icon}</span>}
                 {f.label}
               </button>
             ))}
@@ -182,14 +219,10 @@ export default function ExpensesPage() {
               <p className="text-xs text-gray-400 mt-2">Click the button above to add your first expense</p>
             </div>
           ) : (
-            <AnimatePresence>
-              {filteredExpenses.map((expense, index) => (
-                <motion.div
+            <div className="space-y-3">
+              {filteredExpenses.map((expense) => (
+                <div
                   key={expense.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ delay: index * 0.05 }}
                   className="group bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
                 >
                   <div className="flex items-center justify-between">
@@ -232,69 +265,17 @@ export default function ExpensesPage() {
                       </div>
                       <button
                         onClick={() => deleteExpense(expense.id)}
-                        className="text-xs text-gray-400 hover:text-rose-500 transition-colors mt-1 opacity-0 group-hover:opacity-100"
+                        disabled={loading}
+                        className="text-xs text-gray-400 hover:text-rose-500 transition-colors mt-1 opacity-0 group-hover:opacity-100 disabled:opacity-50"
                       >
                         Delete
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
+            </div>
           )}
-        </div>
-
-        {/* Summary Card */}
-        <div className="mt-6 p-5 bg-gradient-to-r from-rose-500/10 to-orange-500/10 rounded-2xl border border-rose-200/50 dark:border-rose-800/30">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-            <span>📊</span> Spending Summary
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Fixed Expenses</span>
-              <div className="flex items-center gap-3">
-                <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{ width: `${totalExpenses > 0 ? (fixedTotal / totalExpenses) * 100 : 0}%` }}
-                  />
-                </div>
-                <strong className="text-gray-900 dark:text-white">{fmt(fixedTotal)}</strong>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Variable Expenses</span>
-              <div className="flex items-center gap-3">
-                <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-amber-500 rounded-full"
-                    style={{ width: `${totalExpenses > 0 ? (variableTotal / totalExpenses) * 100 : 0}%` }}
-                  />
-                </div>
-                <strong className="text-gray-900 dark:text-white">{fmt(variableTotal)}</strong>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4 pt-3 border-t border-rose-200/50 dark:border-rose-800/30">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Total Spent</span>
-              <strong className="text-rose-600 dark:text-rose-400 text-lg">{fmt(totalExpenses)}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Pro Tip */}
-        <div className="mt-6 bg-gradient-to-r from-rose-500/10 to-orange-500/10 rounded-2xl p-4 border border-rose-200/50 dark:border-rose-800/30">
-          <div className="flex gap-3">
-            <div className="text-2xl">💡</div>
-            <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">Pro Tip</h4>
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                Try to keep variable expenses under 30% of your income. Track small daily purchases - they add up quickly!
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -302,10 +283,7 @@ export default function ExpensesPage() {
       <AnimatePresence>
         {showForm && (
           <div className="fixed inset-0 z-50">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div 
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowForm(false)}
             />
@@ -313,7 +291,7 @@ export default function ExpensesPage() {
               initial={{ opacity: 0, y: "100%" }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              transition={{ type: "spring", damping: 25 }}
               className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="p-6">
@@ -327,13 +305,12 @@ export default function ExpensesPage() {
                   </button>
                 </div>
 
-                {/* Description */}
                 <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Description
                   </label>
                   <input
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500"
                     placeholder="e.g., Groceries, Uber, Rent"
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -341,21 +318,19 @@ export default function ExpensesPage() {
                   />
                 </div>
 
-                {/* Amount */}
                 <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Amount (KES)
                   </label>
                   <input
                     type="number"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500"
                     placeholder="0.00"
                     value={form.amount}
                     onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   />
                 </div>
 
-                {/* Category */}
                 <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Category
@@ -364,11 +339,11 @@ export default function ExpensesPage() {
                     {CATEGORIES.map((cat) => (
                       <button
                         key={cat.id}
-                        onClick={() => setForm({ ...form, category: cat.id })}
+                        onClick={() => setForm({ ...form, category: cat.id, type: cat.type })}
                         className={`p-3 rounded-xl text-left transition-all ${
                           form.category === cat.id
                             ? "ring-2 ring-rose-500 bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/30"
-                            : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100"
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -383,30 +358,29 @@ export default function ExpensesPage() {
                   </div>
                 </div>
 
-                {/* Date */}
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Date
                   </label>
                   <input
                     type="date"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500"
                     value={form.date}
                     onChange={(e) => setForm({ ...form, date: e.target.value })}
                   />
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex gap-3">
                   <button
                     onClick={addExpense}
-                    className="flex-1 bg-gradient-to-r from-rose-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                    disabled={loading}
+                    className="flex-1 bg-gradient-to-r from-rose-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
                   >
-                    Add Expense
+                    {loading ? "Adding..." : "Add Expense"}
                   </button>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                    className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold hover:bg-gray-200"
                   >
                     Cancel
                   </button>
