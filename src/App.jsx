@@ -18,15 +18,20 @@ import { savingsService } from "./services/savingsService";
 
 export const AppContext = createContext(null);
 
+// Valid pages a logged-in user can be on
+const AUTH_PAGES = ["landing", "auth"];
+const VALID_APP_PAGES = [
+  "dashboard", "expenses", "income",
+  "savings", "insights", "afford", "settings",
+];
+
 export default function App() {
   const { isAuthenticated, loading: authLoading, logout } = useAuth();
 
-  const [page, setPage] = useState(() => {
-    // Try to restore last page from localStorage
-    const savedPage = localStorage.getItem("lastPage");
-    return savedPage && savedPage !== "landing" && savedPage !== "auth" ? savedPage : "dashboard";
-  });
-  
+  // Start on "dashboard" unconditionally — the auth effect will
+  // restore the last saved page once auth resolves.
+  const [page, setPage] = useState("dashboard");
+
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
@@ -37,6 +42,10 @@ export default function App() {
   const [expenses, setExpenses] = useState([]);
   const [savingsGoals, setSavingsGoals] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
+
+  // Controls the initial full-screen loading overlay.
+  // Stays true until we know for certain whether the user is
+  // logged in or not (authLoading resolves).
   const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
 
   // ─────────────────────────────────────
@@ -53,42 +62,58 @@ export default function App() {
 
   // ─────────────────────────────────────
   // SAVE LAST PAGE TO LOCALSTORAGE
+  // Only save pages that belong to the authenticated app shell.
   // ─────────────────────────────────────
   useEffect(() => {
-    if (page && page !== "landing" && page !== "auth") {
+    if (VALID_APP_PAGES.includes(page)) {
       localStorage.setItem("lastPage", page);
     }
   }, [page]);
 
   // ─────────────────────────────────────
   // HANDLE AUTHENTICATION STATE
+  //
+  // This is the single source of truth for where the user ends up.
+  // It only runs after authLoading flips to false, meaning
+  // AuthContext has already read localStorage and (if a token
+  // existed) verified it with the backend.  By that point the
+  // Axios interceptor is guaranteed to have a valid token to
+  // attach, so fetchAllData() will never race.
   // ─────────────────────────────────────
   useEffect(() => {
-    // Wait for auth to finish loading before deciding where to go
-    if (!authLoading) {
-      setInitialAuthCheckDone(true);
-      
-      if (isAuthenticated) {
-        // User is logged in, show dashboard
-        if (page === "landing" || page === "auth") {
-          setPage("dashboard");
-        }
-        fetchAllData();
-      } else {
-        // User is not logged in, only show landing/auth
-        if (page !== "landing" && page !== "auth") {
-          setPage("landing");
-        }
-      }
+    // Wait for AuthContext to finish its own async check
+    if (authLoading) return;
+
+    setInitialAuthCheckDone(true);
+
+    if (isAuthenticated) {
+      // Restore the page the user was on before, or default to dashboard
+      const savedPage = localStorage.getItem("lastPage");
+      const restoredPage =
+        savedPage && VALID_APP_PAGES.includes(savedPage)
+          ? savedPage
+          : "dashboard";
+      setPage(restoredPage);
+
+      // Safe to fetch now — token is in localStorage and will be
+      // picked up by the Axios request interceptor
+      fetchAllData();
+    } else {
+      // No valid session — send to landing.
+      // Keep "auth" if they're mid-login so we don't yank the form.
+      setPage((prev) => (prev === "auth" ? "auth" : "landing"));
+      localStorage.removeItem("lastPage");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, authLoading]);
 
   // ─────────────────────────────────────
   // FETCH ALL DATA FROM BACKEND
+  //
+  // Not called until after auth resolves (see effect above),
+  // so the token is always present when this runs.
   // ─────────────────────────────────────
   const fetchAllData = async () => {
-    if (!isAuthenticated) return;
-    
     setDataLoading(true);
     try {
       const [incRes, expRes, savRes] = await Promise.all([
@@ -96,18 +121,20 @@ export default function App() {
         expenseService.getAll(),
         savingsService.getAll(),
       ]);
-      
+
       setIncomes(incRes.data || []);
-      setExpenses((expRes.data || []).map(exp => ({
-        ...exp,
-        description: exp.name
-      })));
+      setExpenses(
+        (expRes.data || []).map((exp) => ({
+          ...exp,
+          description: exp.name,
+        }))
+      );
       setSavingsGoals(savRes.data || []);
-      
+
       console.log("Data loaded:", {
         incomes: incRes.data?.length,
         expenses: expRes.data?.length,
-        savings: savRes.data?.length
+        savings: savRes.data?.length,
       });
     } catch (err) {
       console.error("Failed to load data:", err);
@@ -123,15 +150,23 @@ export default function App() {
   const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const balance = totalIncome - totalExpenses;
 
-  const savingsAmount = expenses.find((e) => e.category === "savings")?.amount || 0;
-  const savingsRate = totalIncome > 0 ? (savingsAmount / totalIncome) * 100 : 0;
+  const savingsAmount =
+    expenses.find((e) => e.category === "savings")?.amount || 0;
+  const savingsRate =
+    totalIncome > 0 ? (savingsAmount / totalIncome) * 100 : 0;
 
   const today = new Date().getDate();
-  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const daysInMonth = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() + 1,
+    0
+  ).getDate();
   const payDay = 28;
-  const daysToPayday = payDay >= today ? payDay - today : daysInMonth - today + payDay;
+  const daysToPayday =
+    payDay >= today ? payDay - today : daysInMonth - today + payDay;
   const dailyBurnRate = totalExpenses / daysInMonth;
-  const survivalDays = dailyBurnRate > 0 ? Math.floor(balance / dailyBurnRate) : 999;
+  const survivalDays =
+    dailyBurnRate > 0 ? Math.floor(balance / dailyBurnRate) : 999;
 
   const healthScore = Math.min(
     100,
@@ -140,16 +175,22 @@ export default function App() {
       (balance > 0 ? 30 : 0) +
         (savingsRate >= 20 ? 25 : savingsRate >= 10 ? 15 : 5) +
         (survivalDays >= 15 ? 25 : survivalDays >= 7 ? 15 : 5) +
-        (totalExpenses / totalIncome < 0.8 ? 20 : totalExpenses / totalIncome < 0.95 ? 10 : 0)
+        (totalExpenses / totalIncome < 0.8
+          ? 20
+          : totalExpenses / totalIncome < 0.95
+          ? 10
+          : 0)
     )
   );
 
   // ─────────────────────────────────────
   // AUTH HANDLERS
   // ─────────────────────────────────────
-  const handleLogin = () => {
-    // Auth state will trigger the useEffect above
-  };
+
+  // Called by AuthPage after a successful login/register.
+  // The useAuth isAuthenticated flag will flip, triggering the
+  // useEffect above which calls fetchAllData — no need to do it here.
+  const handleLogin = () => {};
 
   const handleLogout = async () => {
     await logout();
@@ -187,15 +228,18 @@ export default function App() {
   };
 
   // ─────────────────────────────────────
-  // SHOW LOADING SCREEN WHILE CHECKING AUTH
-  // This prevents the flash of landing page!
+  // LOADING SCREEN
+  // Show this while AuthContext is verifying the token.
+  // Prevents flash of landing page on reload.
   // ─────────────────────────────────────
   if (authLoading || !initialAuthCheckDone) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading PesaPlan...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Loading PesaPlan...
+          </p>
         </div>
       </div>
     );
@@ -213,27 +257,24 @@ export default function App() {
     }
 
     switch (page) {
-      case "dashboard":  return <Dashboard />;
-      case "expenses":   return <ExpensesPage />;
-      case "income":     return <IncomePage />;
-      case "savings":    return <SavingsPage />;
-      case "insights":   return <InsightsPage />;
-      case "afford":     return <AffordabilityTool />;
-      case "settings":   return <SettingsPage onLogout={handleLogout} />;
-      default:           return <Dashboard />;
+      case "dashboard": return <Dashboard />;
+      case "expenses":  return <ExpensesPage />;
+      case "income":    return <IncomePage />;
+      case "savings":   return <SavingsPage />;
+      case "insights":  return <InsightsPage />;
+      case "afford":    return <AffordabilityTool />;
+      case "settings":  return <SettingsPage onLogout={handleLogout} />;
+      default:          return <Dashboard />;
     }
   };
 
   return (
     <AppContext.Provider value={ctx}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 transition-all duration-300">
-        
         {isAuthenticated && <NavBar />}
 
         <main className={isAuthenticated ? "pt-16 pb-20" : ""}>
-          <div className="max-w-7xl mx-auto">
-            {renderPage()}
-          </div>
+          <div className="max-w-7xl mx-auto">{renderPage()}</div>
         </main>
 
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
