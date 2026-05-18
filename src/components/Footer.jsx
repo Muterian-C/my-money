@@ -114,7 +114,6 @@ export default function Footer() {
           <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
           </div>
           <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
-          </div><div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
           </div>
         </div>
       </div>
