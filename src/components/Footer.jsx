@@ -111,6 +111,11 @@ export default function Footer() {
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             Version 2.0.0 | Empowering financial freedom across Kenya, Uganda, Tanzania, Nigeria & beyond
           </p>
+          <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
+          </div>
+          <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
+          </div><div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
+          </div>
         </div>
       </div>
     </footer>
