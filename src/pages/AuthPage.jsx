@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import GoogleLogin from '../components/GoogleLogin';
 
 export default function AuthPage({ onLogin }) {
   const { login, register } = useAuth();
@@ -257,12 +258,29 @@ export default function AuthPage({ onLogin }) {
           </div>
 
           {/* DEMO BUTTON - Enhanced with hover effect */}
-          <button
-            onClick={onLogin}
-            className="w-full border-2 border-gray-200 dark:border-gray-800 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 font-medium text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700"
-          >
-            👀 Try Demo Mode
-          </button>
+          
+
+// In your AuthPage component, add this where you want the button:
+
+<div className="relative my-4">
+  <div className="absolute inset-0 flex items-center">
+    <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
+  </div>
+  <div className="relative flex justify-center text-sm">
+    <span className="px-2 bg-white dark:bg-gray-950 text-gray-500">Or continue with</span>
+  </div>
+</div>
+
+<GoogleLogin 
+  onSuccess={(user) => {
+    console.log('Google login success:', user);
+    onLogin(); // Call your existing onLogin handler
+  }}
+  onError={(error) => {
+    console.error('Google login error:', error);
+    setError(error);
+  }}
+/>
 
           {/* SWITCH MODE LINK */}
           {mode === "login" && (
