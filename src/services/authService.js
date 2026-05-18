@@ -1,6 +1,6 @@
-// authService.js — thin wrappers around AuthContext methods
-// You won't call this directly; use useAuth() hook from AuthContext instead.
-// This file exists for any standalone auth calls outside the context.
+// authService.js — thin wrappers for authentication
+// Use useAuth() hook from AuthContext for most cases
+// This file is for standalone auth calls outside the context
 
 import API from "../api/api";
 
@@ -8,9 +8,17 @@ export const authService = {
   login: (email, password) =>
     API.post("/auth/login", { email, password }),
 
-  register: (name, email, password, payDay) =>
-    API.post("/auth/register", { name, email, password, pay_day: payDay }),
+  register: (name, email, password, payDay = 28) =>
+    API.post("/auth/register", { 
+      name, 
+      email, 
+      password, 
+      pay_day: payDay 
+    }),
 
-  getMe: () =>
-    API.get("/auth/me"),
+  getMe: () => API.get("/auth/me"),
+  
+  logout: () => {
+    localStorage.removeItem("token");
+  },
 };
