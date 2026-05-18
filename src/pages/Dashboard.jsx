@@ -6,30 +6,27 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
   Tooltip,
-  LineChart,
-  Line,
-  Legend,
   Area,
   ComposedChart,
+  XAxis,
+  YAxis,
+  Legend,
+  Line,
 } from "recharts";
 
 const fmt = (n) => `KES ${n.toLocaleString()}`;
 
 const CATEGORY_COLORS = {
-  rent: { bg: "bg-indigo-500", light: "#818cf8", dark: "#4338ca" },
-  transport: { bg: "bg-amber-500", light: "#fbbf24", dark: "#d97706" },
-  food: { bg: "bg-green-500", light: "#22c55e", dark: "#16a34a" },
-  internet: { bg: "bg-blue-500", light: "#3b82f6", dark: "#2563eb" },
-  helb: { bg: "bg-red-500", light: "#ef4444", dark: "#dc2626" },
-  blacktax: { bg: "bg-purple-500", light: "#a855f7", dark: "#7e22ce" },
-  savings: { bg: "bg-emerald-500", light: "#10b981", dark: "#059669" },
-  utilities: { bg: "bg-orange-500", light: "#f97316", dark: "#ea580c" },
-  emergencies: { bg: "bg-pink-500", light: "#ec4899", dark: "#db2777" },
+  rent: "#6366f1",
+  transport: "#f59e0b",
+  food: "#10b981",
+  internet: "#3b82f6",
+  helb: "#ef4444",
+  blacktax: "#8b5cf6",
+  savings: "#14b8a6",
+  utilities: "#f97316",
+  emergencies: "#ec4899",
 };
 
 const CATEGORY_LABELS = {
@@ -63,7 +60,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), 500);
+    setTimeout(() => setIsLoading(false), 600);
   }, []);
 
   const [animatedValues, setAnimatedValues] = useState({
@@ -101,13 +98,12 @@ export default function Dashboard() {
   const pieData = Object.entries(expenseByCategory).map(([k, v]) => ({
     name: CATEGORY_LABELS[k] || k,
     value: v,
-    color: CATEGORY_COLORS[k]?.light || "#888",
-    originalKey: k,
+    color: CATEGORY_COLORS[k] || "#888",
   }));
 
   const spendingRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
 
-  const healthColor = healthScore >= 70 ? "text-green-500" : healthScore >= 45 ? "text-amber-500" : "text-red-500";
+  const healthColor = healthScore >= 70 ? "text-emerald-600" : healthScore >= 45 ? "text-amber-600" : "text-rose-600";
   const healthLabel = healthScore >= 70 ? "Excellent" : healthScore >= 45 ? "Needs Attention" : "Critical";
   const healthIcon = healthScore >= 70 ? "🎉" : healthScore >= 45 ? "⚠️" : "🔴";
 
@@ -127,44 +123,44 @@ export default function Dashboard() {
   const financialFreedomScore = Math.min(100, Math.round((balance / (totalExpenses * 3)) * 100));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-zinc-50 dark:from-slate-950 dark:via-gray-950 dark:to-zinc-950">
       
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-black/80 backdrop-blur-sm">
           <div className="text-center">
-            <div className="w-20 h-20 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-sm text-gray-400">Loading your financial universe...</p>
+            <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-800 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading your dashboard...</p>
           </div>
         </div>
       )}
 
       <div className="px-4 pb-24 max-w-7xl mx-auto">
         
-        {/* Hero Section */}
-        <div className="sticky top-0 z-20 backdrop-blur-xl bg-black/30 border-b border-white/10 pt-6 pb-4 mb-6">
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 pt-6 pb-4 mb-6">
           <div className="flex justify-between items-center flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                {user?.name?.split(" ")[0] || "Financial Warrior"} 👋
+            <div className="animate-fade-in">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+                Welcome back, {user?.name?.split(" ")[0] || "there"} 👋
               </h1>
-              <p className="text-xs text-gray-300 mt-1 flex items-center gap-2">
-                <span className="inline-block w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
-                Your financial universe is thriving
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
+                <span className="inline-block w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                Here's your financial snapshot
               </p>
             </div>
 
             <div className="flex gap-3">
-              <div className="relative group cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                <div className="relative text-sm px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full font-bold shadow-2xl flex items-center gap-2">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-md opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative text-sm px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl font-semibold text-white shadow-lg flex items-center gap-2">
                   <span>💰</span>
-                  {daysToPayday}d to payday
+                  {daysToPayday} days to payday
                 </div>
               </div>
-              <div className="relative group cursor-pointer">
-                <div className="relative text-sm px-4 py-2 bg-white/10 backdrop-blur rounded-full font-semibold hover:bg-white/20 transition-all">
-                  <span>📅</span> {new Date().toLocaleDateString('en-US', { month: 'long' })}
+              <div className="relative group">
+                <div className="relative text-sm px-4 py-2 bg-white dark:bg-gray-800 rounded-xl font-semibold shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all">
+                  <span>📅</span> {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
               </div>
             </div>
@@ -172,28 +168,31 @@ export default function Dashboard() {
         </div>
 
         {/* Main Balance Card */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 rounded-3xl border border-white/20 shadow-2xl">
-            <div className="relative">
-              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-                TOTAL NET WORTH
-              </div>
-              <div className="text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                {fmt(Math.round(animatedValues.balance))}
-              </div>
-              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-white/10">
-                <div className="transform hover:scale-105 transition-all cursor-pointer">
-                  <div className="text-xs text-gray-400">Monthly Income</div>
-                  <div className="text-green-400 font-bold text-lg">↑ {fmt(Math.round(animatedValues.totalIncome))}</div>
+        <div className="mb-6 group">
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-black rounded-2xl border border-gray-200/50 dark:border-gray-800/50 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
+            <div className="relative p-8">
+              <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-full blur-3xl"></div>
+              <div className="relative">
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-2 flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+                  TOTAL NET WORTH
                 </div>
-                <div className="transform hover:scale-105 transition-all cursor-pointer">
-                  <div className="text-xs text-gray-400">Total Spent</div>
-                  <div className="text-red-400 font-bold text-lg">↓ {fmt(Math.round(animatedValues.totalExpenses))}</div>
+                <div className="text-5xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+                  {fmt(Math.round(animatedValues.balance))}
                 </div>
-                <div className="transform hover:scale-105 transition-all cursor-pointer">
-                  <div className="text-xs text-gray-400">Daily Burn</div>
-                  <div className="text-blue-400 font-bold text-lg">{fmt(Math.round(dailyBurnRate))}</div>
+                <div className="grid grid-cols-3 gap-6 pt-6 border-t border-gray-200/50 dark:border-gray-800/50">
+                  <div className="transform hover:scale-105 transition-all cursor-pointer">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Monthly Income</div>
+                    <div className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">↑ {fmt(Math.round(animatedValues.totalIncome))}</div>
+                  </div>
+                  <div className="transform hover:scale-105 transition-all cursor-pointer">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Total Spent</div>
+                    <div className="text-rose-600 dark:text-rose-400 font-bold text-lg">↓ {fmt(Math.round(animatedValues.totalExpenses))}</div>
+                  </div>
+                  <div className="transform hover:scale-105 transition-all cursor-pointer">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Daily Burn Rate</div>
+                    <div className="text-blue-600 dark:text-blue-400 font-bold text-lg">{fmt(Math.round(dailyBurnRate))}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -202,54 +201,83 @@ export default function Dashboard() {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Financial Freedom" value={financialFreedomScore} unit="%" icon="🚀" />
-          <StatCard label="Projected Savings" value={fmt(Math.round(projectedSavings))} icon="📈" />
-          <StatCard label="Survival Days" value={survivalDays} unit="days" icon="⏰" />
-          <StatCard label="Savings Rate" value={savingsRate.toFixed(1)} unit="%" icon="💰" />
+          <MetricCard 
+            label="Financial Freedom" 
+            value={financialFreedomScore} 
+            unit="%" 
+            icon="🚀"
+            trend="up"
+          />
+          <MetricCard 
+            label="Projected Savings" 
+            value={fmt(Math.round(projectedSavings))} 
+            icon="📈"
+            trend="up"
+          />
+          <MetricCard 
+            label="Survival Days" 
+            value={survivalDays} 
+            unit="days" 
+            icon="⏰"
+            trend={survivalDays > 30 ? "up" : "down"}
+          />
+          <MetricCard 
+            label="Savings Rate" 
+              value={savingsRate.toFixed(1)} 
+            unit="%" 
+            icon="💰"
+            trend={savingsRate > 15 ? "up" : "down"}
+          />
         </div>
 
-        {/* Health Score */}
+        {/* Health Score & Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold">Financial Health Score</h3>
-                <p className="text-xs text-gray-400">Based on 7 key metrics</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Financial Health Score</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on 7 key metrics</p>
               </div>
               <div className="text-4xl">{healthIcon}</div>
             </div>
             <div className="text-center">
-              <div className={`text-6xl font-bold mb-4 ${healthColor}`}>{healthScore}</div>
-              <div className={`font-bold text-lg ${healthColor}`}>{healthLabel}</div>
-              <div className="text-xs text-gray-400 mt-2">You're doing {healthScore >= 70 ? 'great!' : healthScore >= 45 ? 'okay' : 'needs work'}</div>
+              <div className={`text-6xl font-bold mb-3 ${healthColor}`}>{healthScore}</div>
+              <div className={`font-semibold text-lg mb-2 ${healthColor}`}>{healthLabel}</div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-4">
+                <div className={`h-2 rounded-full transition-all duration-1000 ${healthScore >= 70 ? 'bg-emerald-500' : healthScore >= 45 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${healthScore}%` }}></div>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                {healthScore >= 70 ? "Excellent financial habits! Keep it up!" : healthScore >= 45 ? "Room for improvement - small changes make a big difference" : "Time to take action - review your spending habits"}
+              </p>
             </div>
           </div>
 
-          {/* Alerts */}
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-              Smart Alerts
+          {/* Alerts Feed */}
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <span className="inline-block w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
+              Smart Insights
             </h3>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+            <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
               {alerts.length > 0 ? alerts.map((a, i) => (
-                <div key={i} className={`p-3 rounded-xl border-l-4 ${a.type === "danger" ? "bg-red-500/10 border-red-500" : "bg-amber-500/10 border-amber-500"}`}>
+                <div key={i} className={`p-4 rounded-xl border-l-4 transition-all hover:scale-[1.02] ${a.type === "danger" ? "bg-rose-50 dark:bg-rose-950/20 border-rose-500" : "bg-amber-50 dark:bg-amber-950/20 border-amber-500"}`}>
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2 text-sm">
                       <span>{a.type === "danger" ? "⚠️" : "ℹ️"}</span>
-                      <span>{a.msg}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{a.msg}</span>
                     </div>
                     {a.action && (
-                      <button className="text-xs font-semibold px-3 py-1 bg-white/10 rounded-lg hover:bg-white/20 transition-all">
+                      <button className="text-xs font-semibold px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all">
                         {a.action} →
                       </button>
                     )}
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-8 text-gray-400">
-                  <div className="text-4xl mb-2">🎉</div>
-                  <p className="text-sm">All clear! You're on track!</p>
+                <div className="text-center py-8">
+                  <div className="text-5xl mb-3">🎉</div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">All clear! You're on track!</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Great financial management</p>
                 </div>
               )}
             </div>
@@ -258,63 +286,74 @@ export default function Dashboard() {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Pie Chart */}
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
+          {/* Donut Chart */}
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">Spending Breakdown</h3>
-              <button onClick={() => setShowAllCategories(!showAllCategories)} className="text-xs text-green-400 hover:text-green-300 transition-all">
-                {showAllCategories ? "Collapse" : "Expand All"} →
-              </button>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Spending Breakdown</h3>
+              {pieData.length > 5 && (
+                <button onClick={() => setShowAllCategories(!showAllCategories)} className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-semibold transition-all">
+                  {showAllCategories ? "Show less ↑" : `View all (${pieData.length}) →`}
+                </button>
+              )}
             </div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie 
-                    data={pieData} 
-                    dataKey="value" 
-                    outerRadius={100}
-                    innerRadius={50}
-                    paddingAngle={3}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={{ stroke: '#fff', strokeWidth: 1 }}
-                  >
-                    {pieData.map((d, i) => (
-                      <Cell key={i} fill={d.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value) => fmt(value)}
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '12px',
-                      color: 'white',
-                      padding: '8px 12px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {pieData.length === 0 ? (
+              <div className="h-80 flex items-center justify-center">
+                <p className="text-gray-500 dark:text-gray-400">No expenses recorded yet</p>
+              </div>
+            ) : (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie 
+                      data={pieData} 
+                      dataKey="value" 
+                      cx="50%" 
+                      cy="50%" 
+                      innerRadius={60} 
+                      outerRadius={90}
+                      paddingAngle={2}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={{ stroke: '#9ca3af', strokeWidth: 1 }}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => fmt(value)}
+                      contentStyle={{
+                        backgroundColor: 'rgba(255,255,255,0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '12px',
+                        padding: '8px 12px',
+                        fontSize: '12px',
+                        color: '#1f2937'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
-          {/* Category List */}
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
-            <h3 className="text-lg font-bold mb-4">Category Insights</h3>
-            <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+          {/* Category Details */}
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Category Insights</h3>
+            <div className="space-y-4 max-h-80 overflow-y-auto custom-scrollbar pr-2">
               {pieData
                 .sort((a, b) => b.value - a.value)
                 .slice(0, showAllCategories ? pieData.length : 5)
                 .map((item, i) => (
                   <div key={i} className="group cursor-pointer">
                     <div className="flex items-center gap-3 text-sm mb-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <div className="flex-1 font-medium">{item.name}</div>
-                      <div className="font-bold">{fmt(item.value)}</div>
-                      <div className="text-gray-400 text-xs">{Math.round((item.value / totalExpenses) * 100)}%</div>
+                      <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }}></div>
+                      <div className="flex-1 font-medium text-gray-700 dark:text-gray-300">{item.name}</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{fmt(item.value)}</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs font-mono">{Math.round((item.value / totalExpenses) * 100)}%</div>
                     </div>
-                    <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                       <div 
-                        className="h-full rounded-full transition-all duration-700"
+                        className="h-full rounded-full transition-all duration-700 group-hover:opacity-80"
                         style={{ 
                           width: `${(item.value / totalExpenses) * 100}%`,
                           backgroundColor: item.color
@@ -327,20 +366,22 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Trend Chart */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 mb-6">
+        {/* Trend Analysis */}
+        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 mb-6">
           <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-            <h3 className="text-lg font-bold">Financial Trajectory</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Financial Trajectory</h3>
             <div className="flex gap-2">
-              {['spending', 'savings', 'income'].map((metric) => (
+              {['spending', 'savings'].map((metric) => (
                 <button
                   key={metric}
                   onClick={() => setSelectedMetric(metric)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    selectedMetric === metric ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/20'
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                    selectedMetric === metric 
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md' 
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  {metric.charAt(0).toUpperCase() + metric.slice(1)}
+                  {metric === 'spending' ? 'Income vs Expenses' : 'Savings Growth'}
                 </button>
               ))}
             </div>
@@ -348,53 +389,67 @@ export default function Dashboard() {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={monthlyTrend}>
-                <XAxis dataKey="month" stroke="#888" />
+                <defs>
+                  <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} />
                 <YAxis hide />
                 <Tooltip 
                   formatter={(value, name) => [fmt(value), name]}
                   contentStyle={{
-                    backgroundColor: 'rgba(0,0,0,0.9)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    border: '1px solid #e5e7eb',
                     borderRadius: '12px',
-                    color: 'white'
+                    padding: '10px 14px',
+                    fontSize: '12px'
                   }}
                 />
-                <Legend />
-                {(selectedMetric === 'income' || selectedMetric === 'spending') && (
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                {selectedMetric === 'spending' ? (
                   <>
-                    <Area type="monotone" dataKey="income" stroke="#22c55e" fill="#22c55e20" strokeWidth={3} />
-                    <Area type="monotone" dataKey="expenses" stroke="#ef4444" fill="#ef444420" strokeWidth={3} />
+                    <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2.5} fill="url(#incomeGradient)" />
+                    <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2.5} fill="url(#expenseGradient)" />
                   </>
-                )}
-                {selectedMetric === 'savings' && (
-                  <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={4} dot={{ fill: "#3b82f6", r: 6 }} />
+                ) : (
+                  <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={3} dot={{ fill: "#3b82f6", r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                 )}
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Quote */}
-        <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 backdrop-blur-xl rounded-3xl p-6 border border-white/10 text-center">
+        {/* Motivational Quote */}
+        <div className="bg-gradient-to-r from-emerald-500/5 to-teal-500/5 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 text-center">
           <div className="text-3xl mb-2">💡</div>
-          <p className="text-sm italic">"The best time to plant a tree was 20 years ago. The second best time is now."</p>
-          <p className="text-xs text-gray-400 mt-2">- Your financial journey starts today</p>
+          <p className="text-sm text-gray-700 dark:text-gray-300 italic font-medium">"The best time to plant a tree was 20 years ago. The second best time is now."</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- Your financial journey starts today</p>
         </div>
       </div>
     </div>
   );
 }
 
-/* Simple Stat Card Component */
-function StatCard({ label, value, unit, icon }) {
+/* Metric Card Component */
+function MetricCard({ label, value, unit, icon, trend }) {
+  const trendColor = trend === "up" ? "text-emerald-600" : trend === "down" ? "text-rose-600" : "text-gray-500";
+  const trendIcon = trend === "up" ? "↗" : trend === "down" ? "↘" : "";
+  
   return (
-    <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20 hover:border-white/40 transition-all duration-300">
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-2xl">{icon}</div>
-        <div className="text-xs text-gray-400">{label}</div>
+    <div className="group bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-2xl">{icon}</span>
+        {trend && <span className={`text-xs font-semibold ${trendColor}`}>{trendIcon}</span>}
       </div>
-      <div className="text-2xl font-bold">
-        {value}{unit && <span className="text-sm ml-1 text-gray-400">{unit}</span>}
+      <div className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{label}</div>
+      <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+        {value}{unit && <span className="text-sm ml-0.5 text-gray-500 dark:text-gray-400">{unit}</span>}
       </div>
     </div>
   );
