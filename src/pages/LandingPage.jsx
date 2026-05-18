@@ -1,8 +1,62 @@
 import { useState, useEffect } from "react";
 
 export default function LandingPage({ onGetStarted }) {
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [isVisible, setIsVisible] = useState({});
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  const testimonials = [
+    {
+      name: "Brian M.",
+      location: "Nairobi, Kenya",
+      role: "Software Developer",
+      image: "👨‍💻",
+      text: "PesaPlan helped me realize I was wasting 40% of my salary on transport and food. Now I save KES 8,000 every month!",
+      savings: "KES 48,000 saved in 6 months",
+      rating: 5,
+      icon: "💚"
+    },
+    {
+      name: "Sarah W.",
+      location: "Kampala, Uganda",
+      role: "Teacher",
+      image: "👩‍🏫",
+      text: "The survival days counter changed my life. I can finally plan my month without anxiety about running out before payday.",
+      savings: "Reduced debt by KES 35,000",
+      rating: 5,
+      icon: "🌟"
+    },
+    {
+      name: "James O.",
+      location: "Lagos, Nigeria",
+      role: "Freelance Designer",
+      image: "🎨",
+      text: "Black tax was eating my income until PesaPlan helped me budget for it properly. Now I help family AND save every month.",
+      savings: "Saving 25% monthly",
+      rating: 5,
+      icon: "🎯"
+    },
+    {
+      name: "Mary A.",
+      location: "Dar es Salaam, Tanzania",
+      role: "Recent Graduate",
+      image: "🎓",
+      text: "As a fresh grad, managing HELB and rent seemed impossible. PesaPlan made it simple. I've never felt this in control.",
+      savings: "Paid off 6 months of HELB early",
+      rating: 5,
+      icon: "📚"
+    },
+    {
+      name: "Peter K.",
+      location: "Accra, Ghana",
+      role: "Small Business Owner",
+      image: "👔",
+      text: "The 'Can I Afford This?' feature stops me from impulse buying. My business profits are up 40% since using PesaPlan.",
+      savings: "Increased profits by 40%",
+      rating: 5,
+      icon: "🚀"
+    }
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +79,22 @@ export default function LandingPage({ onGetStarted }) {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  // Auto-scroll testimonials
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000); // Change every 5 seconds
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
+
+  const nextTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const prevTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
 
   const features = [
     {
@@ -185,26 +255,100 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      {/* Testimonial Section */}
-      <section className="relative max-w-4xl mx-auto px-4 py-12">
-        <div className="bg-gradient-to-br from-gray-50/80 to-white/80 dark:from-gray-900/80 dark:to-gray-950/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 dark:border-gray-800/50 shadow-xl">
-          <div className="flex flex-col md:flex-row gap-6 items-center">
-            <div className="flex-1 text-center md:text-left">
-              <div className="text-6xl mb-4">💚</div>
-              <p className="text-lg italic text-gray-700 dark:text-gray-300 leading-relaxed">
-                "PesaPlan helped me realize I was wasting 40% of my salary on transport and food. Now I save KES 8,000 every month!"
-              </p>
-              <div className="mt-4">
-                <div className="font-semibold text-gray-900 dark:text-white">— Brian M., Nairobi</div>
-                <div className="text-xs text-gray-500 mt-1">Software Developer • Saved KES 48,000 in 6 months</div>
-              </div>
+      {/* Testimonial Carousel Section */}
+      <section className="relative max-w-5xl mx-auto px-4 py-12">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Loved by <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">thousands</span>
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Join our community of financially empowered Africans
+          </p>
+        </div>
+
+        <div className="relative">
+          {/* Carousel Container */}
+          <div className="overflow-hidden">
+            <div 
+              className="flex transition-transform duration-700 ease-in-out"
+              style={{ transform: `translateX(-${currentTestimonial * 100}%)` }}
+            >
+              {testimonials.map((testimonial, idx) => (
+                <div key={idx} className="w-full flex-shrink-0 px-4">
+                  <div className="bg-gradient-to-br from-gray-50/90 to-white/90 dark:from-gray-900/90 dark:to-gray-950/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 dark:border-gray-800/50 shadow-xl">
+                    <div className="flex flex-col md:flex-row gap-8 items-center">
+                      <div className="flex-1 text-center md:text-left">
+                        <div className="text-6xl mb-4">{testimonial.icon}</div>
+                        <div className="flex mb-4 justify-center md:justify-start">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                            <span key={i} className="text-yellow-400 text-lg">★</span>
+                          ))}
+                        </div>
+                        <p className="text-lg italic text-gray-700 dark:text-gray-300 leading-relaxed">
+                          "{testimonial.text}"
+                        </p>
+                        <div className="mt-6">
+                          <div className="font-bold text-gray-900 dark:text-white text-lg">
+                            {testimonial.name}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {testimonial.role} • {testimonial.location}
+                          </div>
+                          <div className="mt-2 inline-block px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs rounded-full font-semibold">
+                            💰 {testimonial.savings}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-full flex items-center justify-center text-4xl shadow-lg">
+                          {testimonial.image}
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm animate-pulse">
+                          ✓
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="relative">
-              <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-full flex items-center justify-center text-3xl shadow-lg">
-                👨‍💻
-              </div>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">✓</div>
-            </div>
+          </div>
+
+          {/* Navigation Buttons */}
+          <button
+            onClick={prevTestimonial}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 md:-ml-6 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-300 border border-gray-200 dark:border-gray-700"
+          >
+            <span className="text-xl">←</span>
+          </button>
+          
+          <button
+            onClick={nextTestimonial}
+            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-2 md:-mr-6 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-300 border border-gray-200 dark:border-gray-700"
+          >
+            <span className="text-xl">→</span>
+          </button>
+
+          {/* Dots Indicator */}
+          <div className="flex justify-center gap-2 mt-8">
+            {testimonials.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentTestimonial(idx)}
+                className={`transition-all duration-300 rounded-full ${
+                  currentTestimonial === idx
+                    ? 'w-8 h-2 bg-gradient-to-r from-emerald-500 to-teal-500'
+                    : 'w-2 h-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Auto-scroll indicator */}
+          <div className="text-center mt-4">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Auto-scrolling • {currentTestimonial + 1} of {testimonials.length}
+            </p>
           </div>
         </div>
       </section>
