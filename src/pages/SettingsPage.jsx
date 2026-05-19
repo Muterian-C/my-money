@@ -23,6 +23,9 @@ export default function SettingsPage({ onLogout }) {
   });
   const [changingPassword, setChangingPassword] = useState(false);
 
+  // Export state
+  const [exporting, setExporting] = useState(false);
+
   // Form data
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -173,6 +176,35 @@ export default function SettingsPage({ onLogout }) {
       setError(err.response?.data?.error || "Failed to change password");
     } finally {
       setChangingPassword(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    setError(null);
+    setSuccess(null);
+    
+    try {
+      const response = await api.get("/export/data");
+      
+      if (response.data.success && response.data.pdf) {
+        // Create a link to download the PDF
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${response.data.pdf}`;
+        link.download = response.data.filename || `pesaplan_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        
+        setSuccess("Financial report exported successfully!");
+      } else {
+        throw new Error("Failed to generate PDF");
+      }
+    } catch (err) {
+      console.error("Export failed:", err);
+      setError("Failed to export report. Please try again.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -548,21 +580,35 @@ export default function SettingsPage({ onLogout }) {
               </div>
             </button>
 
-            <button className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+            <button 
+              onClick={handleExportData}
+              disabled={exporting}
+              className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-all disabled:opacity-50"
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</div>
-                  <div className="text-xs text-gray-500">Add an extra layer of security</div>
+                  <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    {exporting ? (
+                      <>
+                        <span className="animate-spin">⏳</span> Generating Report...
+                      </>
+                    ) : (
+                      <>
+                        📊 Export Financial Report
+                      </>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">Download a complete PDF report with all your financial data</div>
                 </div>
-                <span className="text-gray-400">→</span>
+                <span className="text-gray-400">{!exporting && "→"}</span>
               </div>
             </button>
 
             <button className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-gray-900 dark:text-white">Export Data</div>
-                  <div className="text-xs text-gray-500">Download your financial data</div>
+                  <div className="font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</div>
+                  <div className="text-xs text-gray-500">Add an extra layer of security</div>
                 </div>
                 <span className="text-gray-400">→</span>
               </div>
