@@ -76,12 +76,9 @@ export default function App() {
   // ─────────────────────────────────────
   // HANDLE GOOGLE OAUTH CALLBACK URL
   // ─────────────────────────────────────
- // ─────────────────────────────────────
-// HANDLE GOOGLE OAUTH CALLBACK URL
-// ─────────────────────────────────────
-useEffect(() => {
+ useEffect(() => {
   const path = window.location.pathname;
-  if (path === '/auth/google/callback') {
+  if (path === '/auth/google/success') {
     setPage('google-callback');
   }
 }, []);
