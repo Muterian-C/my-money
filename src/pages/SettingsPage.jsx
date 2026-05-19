@@ -2,24 +2,61 @@ import { useState, useEffect } from "react";
 import { useApp } from "../App";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "../services/api";
 
 export default function SettingsPage({ onLogout }) {
-  const { darkMode, setDarkMode, notifications, setNotifications } = useApp();
+  const { darkMode, setDarkMode, updateUser } = useApp();
   const { user, setUser } = useAuth();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
-  const [currency, setCurrency] = useState("KES");
-  const [monthlyReminder, setMonthlyReminder] = useState(true);
-  const [lowBalanceAlert, setLowBalanceAlert] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  
+  // Password change state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: ""
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
+  // Form data
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
     location: user?.location || "Nairobi, Kenya",
     occupation: user?.occupation || "",
+    pay_day: user?.pay_day || 28,
+    currency: user?.currency || "KES"
   });
+
+  // Notification preferences
+  const [notifications, setNotifications] = useState({
+    monthly_report: true,
+    low_balance: true,
+    overspending: true,
+    savings_reminder: true
+  });
+
+  // Load notification preferences on mount
+  useEffect(() => {
+    fetchNotificationPreferences();
+  }, []);
+
+  const fetchNotificationPreferences = async () => {
+    try {
+      const response = await api.get("/user/notification-preferences");
+      if (response.data) {
+        setNotifications(response.data);
+      }
+    } catch (err) {
+      console.error("Failed to load notification preferences:", err);
+    }
+  };
 
   useEffect(() => {
     if (saved) {
@@ -28,9 +65,115 @@ export default function SettingsPage({ onLogout }) {
     }
   }, [saved]);
 
-  const handleSave = () => {
-    setUser({ ...user, ...formData });
-    setSaved(true);
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    
+    try {
+      const response = await api.put("/user/profile", formData);
+      if (response.data.user) {
+        // Update both contexts
+        setUser(response.data.user);
+        if (updateUser) updateUser(response.data.user);
+        setSuccess("Profile updated successfully!");
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to update profile");
+    } finally {
+      setSaving(false);
+      setSaved(true);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    
+    try {
+      // Update currency and pay_day
+      const response = await api.put("/user/profile", {
+        currency: formData.currency,
+        pay_day: parseInt(formData.pay_day)
+      });
+      
+      if (response.data.user) {
+        setUser(response.data.user);
+        if (updateUser) updateUser(response.data.user);
+      }
+      
+      setSuccess("Preferences updated successfully!");
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to update preferences");
+    } finally {
+      setSaving(false);
+      setSaved(true);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    
+    try {
+      await api.put("/user/notification-preferences", notifications);
+      setSuccess("Notification preferences updated!");
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to update notification preferences");
+    } finally {
+      setSaving(false);
+      setSaved(true);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setError("New passwords do not match");
+      return;
+    }
+    
+    if (passwordData.new_password.length < 6) {
+      setError("New password must be at least 6 characters");
+      return;
+    }
+    
+    setChangingPassword(true);
+    setError(null);
+    
+    try {
+      await api.post("/user/change-password", {
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password
+      });
+      
+      setSuccess("Password changed successfully!");
+      setShowPasswordModal(false);
+      setPasswordData({
+        current_password: "",
+        new_password: "",
+        confirm_password: ""
+      });
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to change password");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleLogout = () => {
@@ -63,8 +206,21 @@ export default function SettingsPage({ onLogout }) {
           </p>
         </div>
 
+        {/* Status Messages */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+        
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-600 dark:text-green-400 text-sm">
+            {success}
+          </div>
+        )}
+
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
           {[
             { id: "profile", label: "Profile", icon: "👤" },
             { id: "preferences", label: "Preferences", icon: "🎨" },
@@ -74,7 +230,7 @@ export default function SettingsPage({ onLogout }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === tab.id
                   ? "text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -131,7 +287,7 @@ export default function SettingsPage({ onLogout }) {
                   type="tel"
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="+254 XXX XXX XXX"
-                  value={formData.phone}
+                  value={formData.phone || ""}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
@@ -144,7 +300,7 @@ export default function SettingsPage({ onLogout }) {
                   <input
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     placeholder="City, Country"
-                    value={formData.location}
+                    value={formData.location || ""}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   />
                 </div>
@@ -156,18 +312,43 @@ export default function SettingsPage({ onLogout }) {
                   <input
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     placeholder="e.g., Software Developer"
-                    value={formData.occupation}
+                    value={formData.occupation || ""}
                     onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
                   />
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Pay Day
+                </label>
+                <select
+                  value={formData.pay_day}
+                  onChange={(e) => setFormData({ ...formData, pay_day: parseInt(e.target.value) })}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {[...Array(31)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      Day {i + 1} of the month
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Your salary/payment day of the month
+                </p>
+              </div>
+
               <button
-                onClick={handleSave}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all relative overflow-hidden group"
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  {saved ? (
+                  {saving ? (
+                    <>
+                      <span className="animate-spin">⏳</span> Saving...
+                    </>
+                  ) : saved ? (
                     <>
                       <span>✓</span> Saved Successfully!
                     </>
@@ -177,7 +358,6 @@ export default function SettingsPage({ onLogout }) {
                     </>
                   )}
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
             </div>
           </motion.div>
@@ -225,8 +405,8 @@ export default function SettingsPage({ onLogout }) {
                 <span>💰</span> Currency Settings
               </h2>
               <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 {currencies.map((curr) => (
@@ -236,6 +416,14 @@ export default function SettingsPage({ onLogout }) {
                 ))}
               </select>
             </div>
+
+            <button
+              onClick={handleSavePreferences}
+              disabled={saving}
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Preferences"}
+            </button>
           </motion.div>
         )}
 
@@ -256,14 +444,14 @@ export default function SettingsPage({ onLogout }) {
                 <div className="text-xs text-gray-500">Get insights about your spending habits</div>
               </div>
               <button
-                onClick={() => setMonthlyReminder(!monthlyReminder)}
+                onClick={() => setNotifications({ ...notifications, monthly_report: !notifications.monthly_report })}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  monthlyReminder ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
+                  notifications.monthly_report ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <div
                   className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    monthlyReminder ? "left-7" : "left-1"
+                    notifications.monthly_report ? "left-7" : "left-1"
                   }`}
                 />
               </button>
@@ -275,14 +463,14 @@ export default function SettingsPage({ onLogout }) {
                 <div className="text-xs text-gray-500">Get notified when balance is low</div>
               </div>
               <button
-                onClick={() => setLowBalanceAlert(!lowBalanceAlert)}
+                onClick={() => setNotifications({ ...notifications, low_balance: !notifications.low_balance })}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  lowBalanceAlert ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
+                  notifications.low_balance ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <div
                   className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    lowBalanceAlert ? "left-7" : "left-1"
+                    notifications.low_balance ? "left-7" : "left-1"
                   }`}
                 />
               </button>
@@ -293,10 +481,46 @@ export default function SettingsPage({ onLogout }) {
                 <div className="font-semibold text-gray-900 dark:text-white">Overspending Alerts</div>
                 <div className="text-xs text-gray-500">Warning when you exceed budget</div>
               </div>
-              <button className="relative w-12 h-6 rounded-full bg-emerald-500">
-                <div className="absolute top-1 left-7 w-4 h-4 bg-white rounded-full" />
+              <button
+                onClick={() => setNotifications({ ...notifications, overspending: !notifications.overspending })}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  notifications.overspending ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    notifications.overspending ? "left-7" : "left-1"
+                  }`}
+                />
               </button>
             </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+              <div>
+                <div className="font-semibold text-gray-900 dark:text-white">Savings Reminders</div>
+                <div className="text-xs text-gray-500">Get reminders about your savings goals</div>
+              </div>
+              <button
+                onClick={() => setNotifications({ ...notifications, savings_reminder: !notifications.savings_reminder })}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  notifications.savings_reminder ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    notifications.savings_reminder ? "left-7" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <button
+              onClick={handleSaveNotifications}
+              disabled={saving}
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Notification Settings"}
+            </button>
           </motion.div>
         )}
 
@@ -311,7 +535,10 @@ export default function SettingsPage({ onLogout }) {
               <span>🔒</span> Security Settings
             </h2>
 
-            <button className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-gray-900 dark:text-white">Change Password</div>
@@ -401,6 +628,88 @@ export default function SettingsPage({ onLogout }) {
                     className="flex-1 px-4 py-2 bg-rose-500 text-white rounded-lg font-semibold hover:bg-rose-600 transition-colors"
                   >
                     Logout
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Change Password Modal */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowPasswordModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl"
+            >
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">🔒</div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Change Password
+                </h3>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={passwordData.current_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={passwordData.new_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={passwordData.confirm_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowPasswordModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={changingPassword}
+                    className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                  >
+                    {changingPassword ? "Changing..." : "Change Password"}
                   </button>
                 </div>
               </div>
