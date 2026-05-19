@@ -29,7 +29,7 @@ const VALID_APP_PAGES = [
 ];
 
 export default function App() {
-  const { isAuthenticated, loading: authLoading, logout } = useAuth();
+  const { isAuthenticated, loading: authLoading, logout, user: authUser, setUser } = useAuth();
 
   // Start on "dashboard" unconditionally — the auth effect will
   // restore the last saved page once auth resolves.
@@ -76,24 +76,24 @@ export default function App() {
   // ─────────────────────────────────────
   // HANDLE GOOGLE OAUTH CALLBACK URL
   // ─────────────────────────────────────
- useEffect(() => {
-  const path = window.location.pathname;
-  if (path === '/auth/google/success') {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const error = urlParams.get('error');
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/auth/google/success') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const error = urlParams.get('error');
 
-    if (token) {
-      localStorage.setItem('token', token);
-      // Clean URL and reload so AuthContext picks up the token
-      window.history.replaceState({}, document.title, '/');
-      window.location.reload();
-    } else {
-      window.history.replaceState({}, document.title, '/');
-      setPage('auth');
+      if (token) {
+        localStorage.setItem('token', token);
+        // Clean URL and reload so AuthContext picks up the token
+        window.history.replaceState({}, document.title, '/');
+        window.location.reload();
+      } else {
+        window.history.replaceState({}, document.title, '/');
+        setPage('auth');
+      }
     }
-  }
-}, []);
+  }, []);
 
   // ─────────────────────────────────────
   // HANDLE AUTHENTICATION STATE
@@ -186,7 +186,7 @@ export default function App() {
     new Date().getMonth() + 1,
     0
   ).getDate();
-  const payDay = 28;
+  const payDay = authUser?.pay_day || 28;
   const daysToPayday =
     payDay >= today ? payDay - today : daysInMonth - today + payDay;
   const dailyBurnRate = totalExpenses / daysInMonth;
@@ -226,6 +226,11 @@ export default function App() {
     localStorage.removeItem("lastPage");
   };
 
+  // Function to update user data from settings
+  const handleUpdateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   // ─────────────────────────────────────
   // CONTEXT VALUE
   // ─────────────────────────────────────
@@ -250,6 +255,8 @@ export default function App() {
     survivalDays,
     healthScore,
     dailyBurnRate,
+    user: authUser, // Add user to AppContext for easier access
+    updateUser: handleUpdateUser, // Add user update function
   };
 
   // ─────────────────────────────────────
