@@ -1,6 +1,7 @@
 import { useApp } from "../App";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
+import { budgetService } from "../services/budgetService";
 import {
   PieChart,
   Pie,
@@ -58,10 +59,33 @@ export default function Dashboard() {
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState("spending");
   const [isLoading, setIsLoading] = useState(true);
+  const [budgetSummary, setBudgetSummary] = useState(null);
+  const [budgetStatus, setBudgetStatus] = useState({ onTrack: 0, warning: 0, exceeded: 0 });
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), 600);
+    loadBudgetSummary();
   }, []);
+
+  const loadBudgetSummary = async () => {
+    try {
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const summary = await budgetService.getBudgetSummary(currentMonth, currentYear);
+      setBudgetSummary(summary);
+      
+      const stats = summary.categories.reduce((acc, cat) => {
+        if (cat.status === 'good') acc.onTrack++;
+        else if (cat.status === 'warning') acc.warning++;
+        else if (cat.status === 'exceeded') acc.exceeded++;
+        return acc;
+      }, { onTrack: 0, warning: 0, exceeded: 0 });
+      
+      setBudgetStatus(stats);
+    } catch (err) {
+      console.error("Failed to load budget summary:", err);
+    }
+  };
 
   const [animatedValues, setAnimatedValues] = useState({
     balance: 0,
@@ -111,6 +135,13 @@ export default function Dashboard() {
   if (survivalDays < 10) alerts.push({ type: "danger", msg: `You may run out of money in ${survivalDays} days.`, action: "Reduce expenses" });
   if (spendingRatio > 90) alerts.push({ type: "danger", msg: `Spending at ${Math.round(spendingRatio)}% of income — critical.`, action: "Review budget" });
   if (savingsRate < 10) alerts.push({ type: "warn", msg: `Savings rate is ${savingsRate.toFixed(1)}% (recommended: 20%)`, action: "Increase savings" });
+  
+  // Add budget alerts if any categories are exceeded
+  if (budgetStatus.exceeded > 0) {
+    alerts.push({ type: "danger", msg: `${budgetStatus.exceeded} budget categor${budgetStatus.exceeded > 1 ? 'ies are' : 'y is'} exceeded`, action: "View budgets" });
+  } else if (budgetStatus.warning > 0) {
+    alerts.push({ type: "warn", msg: `${budgetStatus.warning} budget categor${budgetStatus.warning > 1 ? 'ies are' : 'y is'} close to limit`, action: "Check budgets" });
+  }
 
   const monthlyTrend = [
     { month: "Feb", income: 52000, expenses: 41000, savings: 11000 },
@@ -199,6 +230,54 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Budget Status Card - NEW */}
+        {budgetSummary && budgetSummary.categories.length > 0 && (
+          <div className="mb-6 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Budget Status</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Monthly budget vs actual spending</p>
+              </div>
+              <button
+                onClick={() => window.location.href = '/budget'}
+                className="px-4 py-2 text-sm bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all"
+              >
+                Manage Budgets →
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl">
+                <div className="text-2xl font-bold text-emerald-600">{budgetStatus.onTrack}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">On Track</div>
+              </div>
+              <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-xl">
+                <div className="text-2xl font-bold text-yellow-600">{budgetStatus.warning}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Warning</div>
+              </div>
+              <div className="text-center p-3 bg-red-50 dark:bg-red-950/30 rounded-xl">
+                <div className="text-2xl font-bold text-red-600">{budgetStatus.exceeded}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Exceeded</div>
+              </div>
+            </div>
+            {budgetSummary.total_budget > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-600 dark:text-gray-400">Overall Progress</span>
+                  <span className="font-semibold">
+                    {fmt(Math.round(budgetSummary.total_spent))} / {fmt(Math.round(budgetSummary.total_budget))}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-500 to-teal-500"
+                    style={{ width: `${Math.min((budgetSummary.total_spent / budgetSummary.total_budget) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <MetricCard 
@@ -223,7 +302,7 @@ export default function Dashboard() {
           />
           <MetricCard 
             label="Savings Rate" 
-              value={savingsRate.toFixed(1)} 
+            value={savingsRate.toFixed(1)} 
             unit="%" 
             icon="💰"
             trend={savingsRate > 15 ? "up" : "down"}
@@ -267,7 +346,14 @@ export default function Dashboard() {
                       <span className="text-gray-700 dark:text-gray-300">{a.msg}</span>
                     </div>
                     {a.action && (
-                      <button className="text-xs font-semibold px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all">
+                      <button 
+                        onClick={() => {
+                          if (a.action === "View budgets" || a.action === "Check budgets" || a.action === "Manage Budgets →") {
+                            window.location.href = '/budget';
+                          }
+                        }}
+                        className="text-xs font-semibold px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all"
+                      >
                         {a.action} →
                       </button>
                     )}
@@ -284,7 +370,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Charts Section */}
+        {/* Charts Section - Rest remains the same */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Donut Chart */}
           <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300">
