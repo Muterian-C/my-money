@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../App";
 import { expenseService } from "../services/expenseService";
+import { budgetService } from "../services/budgetService";
 import { motion, AnimatePresence } from "framer-motion";
 
 const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
@@ -33,6 +34,7 @@ export default function ExpensesPage() {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [budgetWarnings, setBudgetWarnings] = useState([]);
   const [form, setForm] = useState({
     description: "",
     amount: "",
@@ -40,6 +42,34 @@ export default function ExpensesPage() {
     type: "variable",
     date: new Date().toISOString().split("T")[0],
   });
+
+  // Load budget warnings when expenses change
+  useEffect(() => {
+    checkBudgetWarnings();
+  }, [expenses]);
+
+  const checkBudgetWarnings = async () => {
+    try {
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const budgetSummary = await budgetService.getBudgetSummary(currentMonth, currentYear);
+      
+      const warnings = budgetSummary.categories
+        .filter(cat => cat.status === 'warning' || cat.status === 'exceeded')
+        .map(cat => ({
+          category: cat.category,
+          status: cat.status,
+          message: cat.status === 'exceeded' 
+            ? `You've exceeded your ${cat.category} budget by ${Math.abs(cat.remaining).toLocaleString()} KES`
+            : `You've used ${cat.percentage}% of your ${cat.category} budget`,
+          percentage: cat.percentage
+        }));
+      
+      setBudgetWarnings(warnings);
+    } catch (err) {
+      console.error("Failed to load budget warnings:", err);
+    }
+  };
 
   const fixedTotal = expenses
     .filter(e => e.type === "fixed")
@@ -75,6 +105,7 @@ export default function ExpensesPage() {
       });
       
       await refetchData(); // Refresh data from backend
+      await checkBudgetWarnings(); // Check budget warnings again
       
       setForm({
         description: "",
@@ -99,6 +130,7 @@ export default function ExpensesPage() {
     try {
       await expenseService.delete(id);
       await refetchData(); // Refresh data from backend
+      await checkBudgetWarnings(); // Check budget warnings again
     } catch (err) {
       setError(err.response?.data?.error || "Failed to delete expense");
       console.error("Delete expense error:", err);
@@ -144,6 +176,38 @@ export default function ExpensesPage() {
             Track and manage all your spending
           </p>
         </div>
+
+        {/* Budget Warnings */}
+        {budgetWarnings.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {budgetWarnings.map((warning, idx) => (
+              <div
+                key={idx}
+                className={`p-3 rounded-xl ${
+                  warning.status === 'exceeded'
+                    ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                    : "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span>{warning.status === 'exceeded' ? "⚠️" : "⚡"}</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {warning.category} Budget {warning.status === 'exceeded' ? 'Exceeded!' : 'Warning'}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{warning.message}</p>
+                  </div>
+                  <button
+                    onClick={() => window.location.href = '/budget'}
+                    className="text-xs px-3 py-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all"
+                  >
+                    View Budget →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -276,6 +340,23 @@ export default function ExpensesPage() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Quick Budget Tip */}
+        <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">💡</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">Smart Budgeting Tip</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-500">Set monthly budgets for each category to track your spending and save more!</p>
+            </div>
+            <button
+              onClick={() => window.location.href = '/budget'}
+              className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600 transition-all"
+            >
+              Set Budgets →
+            </button>
+          </div>
         </div>
       </div>
 
