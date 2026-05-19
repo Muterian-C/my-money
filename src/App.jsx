@@ -79,7 +79,19 @@ export default function App() {
  useEffect(() => {
   const path = window.location.pathname;
   if (path === '/auth/google/success') {
-    setPage('google-callback');
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
+
+    if (token) {
+      localStorage.setItem('token', token);
+      // Clean URL and reload so AuthContext picks up the token
+      window.history.replaceState({}, document.title, '/');
+      window.location.reload();
+    } else {
+      window.history.replaceState({}, document.title, '/');
+      setPage('auth');
+    }
   }
 }, []);
 
