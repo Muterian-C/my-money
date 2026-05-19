@@ -11,6 +11,7 @@ import SavingsPage from "./pages/SavingsPage";
 import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AffordabilityTool from "./pages/AffordabilityTool";
+import BudgetPage from "./pages/BudgetPage";
 import NavBar from "./components/NavBar";
 import GoogleCallback from "./pages/GoogleCallback";
 
@@ -24,7 +25,7 @@ export const AppContext = createContext(null);
 const VALID_APP_PAGES = [
   "dashboard", "expenses", "income",
   "savings", "insights", "afford", "settings",
-  "google-callback",
+  "budget", "google-callback",
 ];
 
 export default function App() {
@@ -308,6 +309,8 @@ export default function App() {
         return <InsightsPage />;
       case "afford": 
         return <AffordabilityTool />;
+      case "budget":
+        return <BudgetPage />;
       case "settings": 
         return <SettingsPage onLogout={handleLogout} />;
       default: 
