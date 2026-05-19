@@ -21,7 +21,6 @@ import { savingsService } from "./services/savingsService";
 export const AppContext = createContext(null);
 
 // Valid pages a logged-in user can be on
-const AUTH_PAGES = ["landing", "auth"];
 const VALID_APP_PAGES = [
   "dashboard", "expenses", "income",
   "savings", "insights", "afford", "settings",
@@ -88,6 +87,9 @@ export default function App() {
         // Clean URL and reload so AuthContext picks up the token
         window.history.replaceState({}, document.title, '/');
         window.location.reload();
+      } else if (error) {
+        window.history.replaceState({}, document.title, '/');
+        setPage('auth');
       } else {
         window.history.replaceState({}, document.title, '/');
         setPage('auth');
@@ -101,7 +103,7 @@ export default function App() {
   // This is the single source of truth for where the user ends up.
   // It only runs after authLoading flips to false, meaning
   // AuthContext has already read localStorage and (if a token
-  // existed) verified it with the backend.  By that point the
+  // existed) verified it with the backend. By that point the
   // Axios interceptor is guaranteed to have a valid token to
   // attach, so fetchAllData() will never race.
   // ─────────────────────────────────────
@@ -129,7 +131,7 @@ export default function App() {
       setPage((prev) => (prev === "auth" ? "auth" : "landing"));
       localStorage.removeItem("lastPage");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, authLoading]);
 
   // ─────────────────────────────────────
@@ -189,7 +191,7 @@ export default function App() {
   const payDay = authUser?.pay_day || 28;
   const daysToPayday =
     payDay >= today ? payDay - today : daysInMonth - today + payDay;
-  const dailyBurnRate = totalExpenses / daysInMonth;
+  const dailyBurnRate = daysInMonth > 0 ? totalExpenses / daysInMonth : 0;
   const survivalDays =
     dailyBurnRate > 0 ? Math.floor(balance / dailyBurnRate) : 999;
 
@@ -200,9 +202,9 @@ export default function App() {
       (balance > 0 ? 30 : 0) +
         (savingsRate >= 20 ? 25 : savingsRate >= 10 ? 15 : 5) +
         (survivalDays >= 15 ? 25 : survivalDays >= 7 ? 15 : 5) +
-        (totalExpenses / totalIncome < 0.8
+        (totalIncome > 0 && totalExpenses / totalIncome < 0.8
           ? 20
-          : totalExpenses / totalIncome < 0.95
+          : totalIncome > 0 && totalExpenses / totalIncome < 0.95
           ? 10
           : 0)
     )
@@ -255,8 +257,8 @@ export default function App() {
     survivalDays,
     healthScore,
     dailyBurnRate,
-    user: authUser, // Add user to AppContext for easier access
-    updateUser: handleUpdateUser, // Add user update function
+    user: authUser,
+    updateUser: handleUpdateUser,
   };
 
   // ─────────────────────────────────────
@@ -294,14 +296,22 @@ export default function App() {
     }
 
     switch (page) {
-      case "dashboard": return <Dashboard />;
-      case "expenses":  return <ExpensesPage />;
-      case "income":    return <IncomePage />;
-      case "savings":   return <SavingsPage />;
-      case "insights":  return <InsightsPage />;
-      case "afford":    return <AffordabilityTool />;
-      case "settings":  return <SettingsPage onLogout={handleLogout} />;
-      default:          return <Dashboard />;
+      case "dashboard": 
+        return <Dashboard />;
+      case "expenses": 
+        return <ExpensesPage />;
+      case "income": 
+        return <IncomePage />;
+      case "savings": 
+        return <SavingsPage />;
+      case "insights": 
+        return <InsightsPage />;
+      case "afford": 
+        return <AffordabilityTool />;
+      case "settings": 
+        return <SettingsPage onLogout={handleLogout} />;
+      default: 
+        return <Dashboard />;
     }
   };
 
@@ -311,11 +321,14 @@ export default function App() {
         {isAuthenticated && <NavBar />}
 
         <main className={isAuthenticated ? "pt-16 pb-20" : ""}>
-          <div className="max-w-7xl mx-auto">{renderPage()}</div>
+          <div className="max-w-7xl mx-auto">
+            {renderPage()}
+          </div>
         </main>
 
         <Footer />
 
+        {/* Animated background blobs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
