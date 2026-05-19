@@ -76,24 +76,15 @@ export default function App() {
   // ─────────────────────────────────────
   // HANDLE GOOGLE OAUTH CALLBACK URL
   // ─────────────────────────────────────
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    const error = params.get('error');
-    
-    if (token || error) {
-      // We're in the callback page
-      setPage("google-callback");
-      
-      if (token) {
-        localStorage.setItem('token', token);
-        // Short delay then reload to trigger auth
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 2000);
-      }
-    }
-  }, []);
+ // ─────────────────────────────────────
+// HANDLE GOOGLE OAUTH CALLBACK URL
+// ─────────────────────────────────────
+useEffect(() => {
+  const path = window.location.pathname;
+  if (path === '/auth/google/callback') {
+    setPage('google-callback');
+  }
+}, []);
 
   // ─────────────────────────────────────
   // HANDLE AUTHENTICATION STATE
