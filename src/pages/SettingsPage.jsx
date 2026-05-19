@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useApp } from "../App";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
-import api from "../services/api";
+import API from "../api/api";  // Use your existing API instance
 
 export default function SettingsPage({ onLogout }) {
   const { darkMode, setDarkMode, updateUser } = useApp();
@@ -52,7 +52,7 @@ export default function SettingsPage({ onLogout }) {
 
   const fetchNotificationPreferences = async () => {
     try {
-      const response = await api.get("/user/notification-preferences");
+      const response = await API.get("/user/notification-preferences");
       if (response.data) {
         setNotifications(response.data);
       }
@@ -88,7 +88,7 @@ export default function SettingsPage({ onLogout }) {
     setSuccess(null);
     
     try {
-      const response = await api.put("/user/profile", formData);
+      const response = await API.put("/user/profile", formData);
       if (response.data.user) {
         // Update both contexts
         setUser(response.data.user);
@@ -110,7 +110,7 @@ export default function SettingsPage({ onLogout }) {
     
     try {
       // Update currency and pay_day
-      const response = await api.put("/user/profile", {
+      const response = await API.put("/user/profile", {
         currency: formData.currency,
         pay_day: parseInt(formData.pay_day)
       });
@@ -135,7 +135,7 @@ export default function SettingsPage({ onLogout }) {
     setSuccess(null);
     
     try {
-      await api.put("/user/notification-preferences", notifications);
+      await API.put("/user/notification-preferences", notifications);
       setSuccess("Notification preferences updated!");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update notification preferences");
@@ -160,7 +160,7 @@ export default function SettingsPage({ onLogout }) {
     setError(null);
     
     try {
-      await api.post("/user/change-password", {
+      await API.post("/user/change-password", {
         current_password: passwordData.current_password,
         new_password: passwordData.new_password
       });
@@ -185,7 +185,7 @@ export default function SettingsPage({ onLogout }) {
     setSuccess(null);
     
     try {
-      const response = await api.get("/export/data");
+      const response = await API.get("/export/data");
       
       if (response.data.success && response.data.pdf) {
         // Create a link to download the PDF
