@@ -1,47 +1,25 @@
 import { useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
-export default function GoogleCallback() {
+export default function GoogleCallback({ onLogin }) {
+  const { login } = useAuth();
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const error = params.get('error');
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
 
-    if (error || !code) {
-      if (window.opener) {
-        window.opener.postMessage({ type: 'google_auth_error', error: error || 'no_code' }, window.location.origin);
-        window.close();
-      } else {
-        window.location.href = '/?error=' + (error || 'no_code');
-      }
+    if (error || !token) {
+      window.location.href = '/?auth_error=' + (error || 'no_token');
       return;
     }
 
-    // Exchange the code for a token via your backend
-    fetch('https://muterian.pythonanywhere.com/api/auth/google/callback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.access_token) {
-          if (window.opener) {
-            window.opener.postMessage(
-              { type: 'google_auth_success', token: data.access_token, user: data.user },
-              window.location.origin
-            );
-            window.close();
-          }
-        } else {
-          throw new Error(data.error || 'No token received');
-        }
-      })
-      .catch(err => {
-        if (window.opener) {
-          window.opener.postMessage({ type: 'google_auth_error', error: err.message }, window.location.origin);
-          window.close();
-        }
-      });
+    // Save token and load user
+    localStorage.setItem('token', token);
+    
+    // Clean the URL then trigger app to re-check auth
+    window.history.replaceState({}, document.title, '/');
+    window.location.reload();
   }, []);
 
   return (
