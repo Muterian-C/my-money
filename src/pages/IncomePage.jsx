@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../App";
 import { incomeService } from "../services/incomeService";
+import { budgetService } from "../services/budgetService";
 import { motion, AnimatePresence } from "framer-motion";
 
 const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
@@ -25,6 +26,7 @@ export default function IncomePage() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [budgetSummary, setBudgetSummary] = useState(null);
   const [form, setForm] = useState({
     source: "",
     amount: "",
@@ -32,6 +34,22 @@ export default function IncomePage() {
     category: "salary",
     date: new Date().toISOString().split("T")[0],
   });
+
+  // Load budget summary
+  useEffect(() => {
+    loadBudgetSummary();
+  }, []);
+
+  const loadBudgetSummary = async () => {
+    try {
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const summary = await budgetService.getBudgetSummary(currentMonth, currentYear);
+      setBudgetSummary(summary);
+    } catch (err) {
+      console.error("Failed to load budget summary:", err);
+    }
+  };
 
   const totalMonthlyIncome = incomes
     .filter(inc => inc.frequency === "monthly")
@@ -44,6 +62,8 @@ export default function IncomePage() {
   const totalOneTimeIncome = incomes
     .filter(inc => inc.frequency === "one-time")
     .reduce((sum, inc) => sum + inc.amount, 0);
+
+  const totalAllIncome = totalMonthlyIncome + totalWeeklyIncome + totalOneTimeIncome;
 
   const addIncome = async () => {
     if (!form.source || !form.amount) {
@@ -64,6 +84,7 @@ export default function IncomePage() {
       });
       
       await refetchData();
+      await loadBudgetSummary();
       
       setForm({
         source: "",
@@ -88,6 +109,7 @@ export default function IncomePage() {
     try {
       await incomeService.delete(id);
       await refetchData();
+      await loadBudgetSummary();
     } catch (err) {
       setError(err.response?.data?.error || "Failed to delete income");
       console.error("Delete income error:", err);
@@ -145,6 +167,53 @@ export default function IncomePage() {
             <div className="text-2xl font-bold">{fmt(totalOneTimeIncome)}</div>
           </div>
         </div>
+
+        {/* Income vs Budget Section */}
+        {budgetSummary && budgetSummary.total_budget > 0 && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">💰</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">Income vs Budget Allocation</span>
+              </div>
+              <button 
+                onClick={() => window.location.href = '/budget'}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Manage Budgets →
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-gray-500">Total Monthly Income</div>
+                <div className="text-xl font-bold text-blue-600">{fmt(totalAllIncome)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Total Budget</div>
+                <div className="text-xl font-bold text-emerald-600">{fmt(budgetSummary.total_budget)}</div>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-600">Budget Usage</span>
+                <span className="font-semibold">
+                  {fmt(budgetSummary.total_spent)} / {fmt(budgetSummary.total_budget)}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className="h-2 rounded-full bg-blue-500 transition-all"
+                  style={{ width: `${Math.min((budgetSummary.total_spent / budgetSummary.total_budget) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                💡 {totalAllIncome > budgetSummary.total_budget 
+                  ? `You have ${fmt(totalAllIncome - budgetSummary.total_budget)} above your budget. Consider increasing your savings!`
+                  : `You're living within your budget! Great job! 🎉`}
+              </p>
+            </div>
+          </div>
+        )}
 
         <button
           onClick={() => setShowForm(true)}
