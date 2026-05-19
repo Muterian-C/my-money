@@ -3,24 +3,45 @@ import { useEffect } from 'react';
 export default function GoogleCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    const code = params.get('code');
     const error = params.get('error');
-    
-    if (error) {
-      console.error('Google auth error:', error);
-      window.location.href = '/auth?error=' + error;
+
+    if (error || !code) {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'google_auth_error', error: error || 'no_code' }, window.location.origin);
+        window.close();
+      } else {
+        window.location.href = '/?error=' + (error || 'no_code');
+      }
       return;
     }
-    
-    if (token) {
-      console.log('Google auth successful, saving token');
-      localStorage.setItem('token', token);
-      // Redirect to dashboard immediately
-      window.location.href = '/dashboard';
-    } else {
-      console.error('No token received');
-      window.location.href = '/auth?error=no_token';
-    }
+
+    // Exchange the code for a token via your backend
+    fetch('https://muterian.pythonanywhere.com/api/auth/google/callback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.access_token) {
+          if (window.opener) {
+            window.opener.postMessage(
+              { type: 'google_auth_success', token: data.access_token, user: data.user },
+              window.location.origin
+            );
+            window.close();
+          }
+        } else {
+          throw new Error(data.error || 'No token received');
+        }
+      })
+      .catch(err => {
+        if (window.opener) {
+          window.opener.postMessage({ type: 'google_auth_error', error: err.message }, window.location.origin);
+          window.close();
+        }
+      });
   }, []);
 
   return (
@@ -28,7 +49,6 @@ export default function GoogleCallback() {
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-gray-600 dark:text-gray-400">Completing Google sign in...</p>
-        <p className="text-xs text-gray-500 mt-2">Redirecting to dashboard...</p>
       </div>
     </div>
   );
