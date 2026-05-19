@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useApp } from "../App";
 import { savingsService } from "../services/savingsService";
+import { budgetService } from "../services/budgetService";
 import { motion, AnimatePresence } from "framer-motion";
 
 const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
@@ -111,17 +112,17 @@ export default function SavingsPage() {
       <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
         
         <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 text-emerald-700 dark:text-emerald-400 rounded-full mb-4">
             <span>🎯</span> Goal Tracker
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent mb-3">
             Savings Goals
           </h1>
-          <p className="text-gray-600">Track your progress towards financial freedom</p>
+          <p className="text-gray-600 dark:text-gray-400">Track your progress towards financial freedom</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-xl text-red-600 text-sm">
             ⚠️ {error}
           </div>
         )}
@@ -139,7 +140,7 @@ export default function SavingsPage() {
               <div className="text-xs text-gray-500">{savingsGoals.length} active goal(s)</div>
             </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
             <div 
               className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-1000"
               style={{ width: `${overallProgress}%` }}
@@ -147,10 +148,46 @@ export default function SavingsPage() {
           </div>
         </div>
 
+        {/* Savings Tip - Link to Budget */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-xl p-4 mb-6 border border-purple-200 dark:border-purple-800">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">💡</div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Pro Tip: Automate Your Savings</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Create a "Savings" category in your budget to automatically track monthly savings contributions.
+                This helps you stay on track with your goals!
+              </p>
+            </div>
+            <button 
+              onClick={() => window.location.href = '/budget'}
+              className="px-4 py-2 text-sm bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 transition-all shadow-md"
+            >
+              Set Savings Budget →
+            </button>
+          </div>
+        </div>
+
+        {/* Monthly Savings Recommendation */}
+        {savingsGoals.length > 0 && (
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl p-4 mb-6 border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">📊</div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Monthly Savings Recommendation</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  To reach your goals on time, aim to save at least 
+                  <span className="font-bold text-emerald-600"> {fmt(Math.round(totalTarget / 12))}</span> per month.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={() => setShowForm(true)}
           disabled={loading}
-          className="group relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 mb-8 disabled:opacity-50"
+          className="group relative w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] mb-8 disabled:opacity-50"
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             <span className="text-xl">+</span> Create New Savings Goal
@@ -159,9 +196,10 @@ export default function SavingsPage() {
 
         <div className="space-y-4">
           {savingsGoals.length === 0 ? (
-            <div className="text-center py-12 bg-white/60 rounded-2xl border">
+            <div className="text-center py-12 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl border">
               <div className="text-6xl mb-4">💰</div>
-              <p className="text-gray-500">No savings goals yet</p>
+              <p className="text-gray-500 dark:text-gray-400">No savings goals yet</p>
+              <p className="text-xs text-gray-400 mt-2">Create your first goal and start saving!</p>
             </div>
           ) : (
             savingsGoals.map((goal) => {
@@ -194,22 +232,31 @@ export default function SavingsPage() {
 
                   <div className="mb-3">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Progress</span>
+                      <span className="text-gray-600 dark:text-gray-400">Progress</span>
                       <span className="font-semibold" style={{ color: goal.color }}>{Math.round(progress)}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                       <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progress}%`, backgroundColor: goal.color }}></div>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center text-sm mb-3">
-                    <div><div className="text-xs text-gray-500">Saved</div><div className="font-semibold">{fmt(goal.saved)}</div></div>
-                    <div><div className="text-xs text-gray-500">Remaining</div><div className="font-semibold">{fmt(goal.target - goal.saved)}</div></div>
-                    <div><div className="text-xs text-gray-500">Target</div><div className="font-semibold">{fmt(goal.target)}</div></div>
+                    <div>
+                      <div className="text-xs text-gray-500">Saved</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{fmt(goal.saved)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">Remaining</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{fmt(goal.target - goal.saved)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">Target</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{fmt(goal.target)}</div>
+                    </div>
                   </div>
 
                   {!isCompleted && (
-                    <div className="mt-3 pt-3 border-t">
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                       <div className="flex items-center gap-2">
                         <label className="text-xs text-gray-500">Update saved:</label>
                         <input
@@ -226,6 +273,15 @@ export default function SavingsPage() {
             })
           )}
         </div>
+
+        {/* Motivational Message */}
+        {savingsGoals.length > 0 && overallProgress > 0 && overallProgress < 100 && (
+          <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              🌟 You're {Math.round(overallProgress)}% of the way to your savings goals! Keep going!
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Add Goal Modal */}
@@ -248,7 +304,7 @@ export default function SavingsPage() {
                 <div className="mb-4">
                   <label className="block text-sm font-semibold mb-2">Goal Name</label>
                   <input
-                    className="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500"
                     placeholder="e.g., Emergency Fund, New Laptop"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -259,7 +315,7 @@ export default function SavingsPage() {
                   <label className="block text-sm font-semibold mb-2">Target Amount (KES)</label>
                   <input
                     type="number"
-                    className="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500"
                     placeholder="0.00"
                     value={form.target}
                     onChange={(e) => setForm({ ...form, target: e.target.value })}
@@ -270,7 +326,7 @@ export default function SavingsPage() {
                   <label className="block text-sm font-semibold mb-2">Already Saved (KES)</label>
                   <input
                     type="number"
-                    className="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500"
                     placeholder="0.00"
                     value={form.saved}
                     onChange={(e) => setForm({ ...form, saved: e.target.value })}
@@ -281,7 +337,7 @@ export default function SavingsPage() {
                   <label className="block text-sm font-semibold mb-2">Target Date (Optional)</label>
                   <input
                     type="date"
-                    className="w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border rounded-xl focus:ring-2 focus:ring-emerald-500"
                     value={form.deadline}
                     onChange={(e) => setForm({ ...form, deadline: e.target.value })}
                   />
@@ -311,7 +367,7 @@ export default function SavingsPage() {
                   </button>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold"
+                    className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold"
                   >
                     Cancel
                   </button>
