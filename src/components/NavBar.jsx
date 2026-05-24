@@ -7,6 +7,7 @@ const navItems = [
   { id: "dashboard", icon: "🏠", iconActive: "🏠", label: "Home" },
   { id: "expenses", icon: "💸", iconActive: "💸", label: "Spend" },
   { id: "income", icon: "💰", iconActive: "💰", label: "Earn" },
+  { id: "bills", icon: "📋", iconActive: "📋", label: "Bills" },  // Add this line
   { id: "savings", icon: "🎯", iconActive: "🎯", label: "Save" },
   { id: "budget", icon: "📋", iconActive: "📋", label: "Budget" },
   { id: "insights", icon: "📊", iconActive: "📊", label: "Insights" },
