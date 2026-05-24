@@ -2,6 +2,7 @@ import { useApp } from "../App";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { budgetService } from "../services/budgetService";
+import { billService } from "../services/billService";
 import {
   PieChart,
   Pie,
@@ -61,10 +62,12 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [budgetSummary, setBudgetSummary] = useState(null);
   const [budgetStatus, setBudgetStatus] = useState({ onTrack: 0, warning: 0, exceeded: 0 });
+  const [billsSummary, setBillsSummary] = useState(null);
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), 600);
     loadBudgetSummary();
+    loadBillsSummary();
   }, []);
 
   const loadBudgetSummary = async () => {
@@ -84,6 +87,15 @@ export default function Dashboard() {
       setBudgetStatus(stats);
     } catch (err) {
       console.error("Failed to load budget summary:", err);
+    }
+  };
+
+  const loadBillsSummary = async () => {
+    try {
+      const summary = await billService.getBillsSummary();
+      setBillsSummary(summary);
+    } catch (err) {
+      console.error("Failed to load bills summary:", err);
     }
   };
 
@@ -141,6 +153,16 @@ export default function Dashboard() {
     alerts.push({ type: "danger", msg: `${budgetStatus.exceeded} budget categor${budgetStatus.exceeded > 1 ? 'ies are' : 'y is'} exceeded`, action: "View budgets" });
   } else if (budgetStatus.warning > 0) {
     alerts.push({ type: "warn", msg: `${budgetStatus.warning} budget categor${budgetStatus.warning > 1 ? 'ies are' : 'y is'} close to limit`, action: "Check budgets" });
+  }
+
+  // Add bill alerts if there are upcoming bills
+  if (billsSummary && billsSummary.upcoming_bills && billsSummary.upcoming_bills.length > 0) {
+    alerts.push({ 
+      type: "warn", 
+      msg: `${billsSummary.upcoming_bills.length} bill${billsSummary.upcoming_bills.length > 1 ? 's are' : ' is'} due soon`, 
+      action: "View bills",
+      details: billsSummary.upcoming_bills.map(b => `${b.name} (${b.days_until} days)`).join(", ")
+    });
   }
 
   const monthlyTrend = [
@@ -230,7 +252,92 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Budget Status Card - NEW */}
+        {/* Bills Summary Card - NEW */}
+        {billsSummary && billsSummary.bill_count > 0 && (
+          <div className="mb-6 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span>📋</span> Monthly Bills Overview
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Track your recurring payments</p>
+              </div>
+              <button
+                onClick={() => window.location.href = '/bills'}
+                className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-all"
+              >
+                Manage Bills →
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
+                <div className="text-2xl font-bold text-blue-600">{fmt(billsSummary.total_monthly_bills)}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Total Monthly</div>
+              </div>
+              <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-xl">
+                <div className="text-2xl font-bold text-green-600">{fmt(billsSummary.paid_this_month)}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Paid This Month</div>
+              </div>
+              <div className="text-center p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
+                <div className="text-2xl font-bold text-amber-600">{fmt(billsSummary.remaining_to_pay)}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Remaining</div>
+              </div>
+              <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl">
+                <div className="text-2xl font-bold text-purple-600">{billsSummary.bill_count}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Active Bills</div>
+              </div>
+            </div>
+
+            {/* Progress bar for bills payment */}
+            <div className="mt-3">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-600 dark:text-gray-400">Payment Progress</span>
+                <span className="font-semibold">
+                  {Math.round((billsSummary.paid_this_month / billsSummary.total_monthly_bills) * 100)}% Paid
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-indigo-500"
+                  style={{ width: `${Math.min((billsSummary.paid_this_month / billsSummary.total_monthly_bills) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Upcoming bills quick view */}
+            {billsSummary.upcoming_bills && billsSummary.upcoming_bills.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">⏰ Upcoming Soon</span>
+                  <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">
+                    {billsSummary.upcoming_bills.length} bill{billsSummary.upcoming_bills.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {billsSummary.upcoming_bills.slice(0, 3).map((bill, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">{bill.name}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold">{fmt(bill.amount)}</span>
+                        <span className="text-xs text-red-500">
+                          Due in {bill.days_until} day{bill.days_until !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {billsSummary.upcoming_bills.length > 3 && (
+                    <p className="text-xs text-gray-500 text-center">
+                      +{billsSummary.upcoming_bills.length - 3} more bills
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Budget Status Card */}
         {budgetSummary && budgetSummary.categories.length > 0 && (
           <div className="mb-6 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg">
             <div className="flex justify-between items-center mb-4">
@@ -341,15 +448,22 @@ export default function Dashboard() {
               {alerts.length > 0 ? alerts.map((a, i) => (
                 <div key={i} className={`p-4 rounded-xl border-l-4 transition-all hover:scale-[1.02] ${a.type === "danger" ? "bg-rose-50 dark:bg-rose-950/20 border-rose-500" : "bg-amber-50 dark:bg-amber-950/20 border-amber-500"}`}>
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span>{a.type === "danger" ? "⚠️" : "ℹ️"}</span>
-                      <span className="text-gray-700 dark:text-gray-300">{a.msg}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span>{a.type === "danger" ? "⚠️" : "ℹ️"}</span>
+                        <span className="text-gray-700 dark:text-gray-300">{a.msg}</span>
+                      </div>
+                      {a.details && (
+                        <p className="text-xs text-gray-500 mt-1">{a.details}</p>
+                      )}
                     </div>
                     {a.action && (
                       <button 
                         onClick={() => {
                           if (a.action === "View budgets" || a.action === "Check budgets" || a.action === "Manage Budgets →") {
                             window.location.href = '/budget';
+                          } else if (a.action === "View bills") {
+                            window.location.href = '/bills';
                           }
                         }}
                         className="text-xs font-semibold px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all"
