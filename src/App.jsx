@@ -13,6 +13,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AffordabilityTool from "./pages/AffordabilityTool";
 import BudgetPage from "./pages/BudgetPage";
 import NavBar from "./components/NavBar";
+import BillsPage from "./pages/BillsPage";
 import GoogleCallback from "./pages/GoogleCallback";
 
 import { incomeService } from "./services/incomeService";
@@ -24,7 +25,7 @@ export const AppContext = createContext(null);
 // Valid pages a logged-in user can be on
 const VALID_APP_PAGES = [
   "dashboard", "expenses", "income",
-  "savings", "insights", "afford", "settings",
+  "savings", "bills", "insights", "afford", "settings",
   "budget", "google-callback",
 ];
 
@@ -307,6 +308,8 @@ export default function App() {
         return <SavingsPage />;
       case "insights": 
         return <InsightsPage />;
+      case "bills":
+        return <BillsPage />;
       case "afford": 
         return <AffordabilityTool />;
       case "budget":
