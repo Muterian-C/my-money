@@ -1,4 +1,4 @@
-import { useApp } from "../App";
+import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { budgetService } from "../services/budgetService";
