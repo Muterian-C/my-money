@@ -1,5 +1,5 @@
 import { useAuth } from "../context/AuthContext";
-import { useApp } from "../App";
+import { useApp } from "../context/AppContext"; // ✅ fixed — was "../App" which caused circular import
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -7,7 +7,7 @@ const navItems = [
   { id: "dashboard", icon: "🏠", iconActive: "🏠", label: "Home" },
   { id: "expenses", icon: "💸", iconActive: "💸", label: "Spend" },
   { id: "income", icon: "💰", iconActive: "💰", label: "Earn" },
-  { id: "bills", icon: "📋", iconActive: "📋", label: "Bills" },  // Add this line
+  { id: "bills", icon: "📋", iconActive: "📋", label: "Bills" },
   { id: "savings", icon: "🎯", iconActive: "🎯", label: "Save" },
   { id: "budget", icon: "📋", iconActive: "📋", label: "Budget" },
   { id: "insights", icon: "📊", iconActive: "📊", label: "Insights" },
@@ -55,16 +55,16 @@ export default function NavBar() {
     <>
       {/* Top Navbar */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? "bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-lg" 
+        scrolled
+          ? "bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-lg"
           : "bg-white/80 dark:bg-gray-950/80 backdrop-blur-md"
       } border-b border-gray-200/50 dark:border-gray-800/50`}>
-        
+
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            
+
             {/* Brand Logo */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-2"
@@ -144,7 +144,7 @@ export default function NavBar() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="p-2">
                         <button
                           onClick={() => {
@@ -155,10 +155,9 @@ export default function NavBar() {
                         >
                           <span className="mr-2">⚙️</span> Settings
                         </button>
-                        
+
                         <button
                           onClick={() => {
-                            // Trigger logout from settings page
                             setPage("settings");
                             setShowProfileMenu(false);
                           }}
@@ -167,7 +166,7 @@ export default function NavBar() {
                           <span className="mr-2">🚪</span> Logout
                         </button>
                       </div>
-                      
+
                       <div className="p-3 border-t border-gray-200 dark:border-gray-800">
                         <div className="text-xs text-gray-500 text-center">
                           {getGreeting()}, {user?.name?.split(" ")[0] || "there"}! 👋
@@ -184,7 +183,6 @@ export default function NavBar() {
 
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50">
-        {/* Safe area spacer for iOS */}
         <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 pb-[env(safe-area-inset-bottom)]">
           <div className="flex items-center justify-around px-4 py-2">
             {navItems.map((item) => {
@@ -204,7 +202,7 @@ export default function NavBar() {
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   )}
-                  
+
                   <div
                     className={`w-12 h-10 flex items-center justify-center text-xl rounded-xl transition-all duration-300 ${
                       active
@@ -214,7 +212,7 @@ export default function NavBar() {
                   >
                     {active ? item.iconActive : item.icon}
                   </div>
-                  
+
                   <span
                     className={`text-xs font-medium transition-all duration-300 ${
                       active
@@ -224,7 +222,7 @@ export default function NavBar() {
                   >
                     {item.label}
                   </span>
-                  
+
                   {/* Tooltip on hover */}
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                     {item.label}
@@ -236,9 +234,9 @@ export default function NavBar() {
         </div>
       </nav>
 
-      {/* Spacer divs to prevent content from hiding under fixed navbars */}
-      <div className="h-16" /> {/* Spacer for top navbar */}
-      <div className="h-20" /> {/* Spacer for bottom navbar */}
+      {/* Spacers to prevent content from hiding under fixed navbars */}
+      <div className="h-16" />
+      <div className="h-20" />
     </>
   );
 }
