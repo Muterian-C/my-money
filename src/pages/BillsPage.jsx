@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useApp } from "../App";
+import { useApp } from "../context/AppContext";
 import { billService } from "../services/billService";
 import { motion, AnimatePresence } from "framer-motion";
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useApp } from "../App";
+import { useApp } from "../context/AppContext";
 import { budgetService } from "../services/budgetService";
 import { expenseService } from "../services/expenseService";
 

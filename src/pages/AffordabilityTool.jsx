@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { useApp } from "../App";
-
+import { useApp } from "../context/AppContext";
 export default function AffordabilityTool() {
   const [amount, setAmount] = useState("");
   const [showInsight, setShowInsight] = useState(false);
