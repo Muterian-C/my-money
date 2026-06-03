@@ -1,6 +1,7 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect } from "react";
 import Footer from "./components/Footer";
 import { useAuth } from "./context/AuthContext";
+import { AppContext } from "./context/AppContext"; // ✅ imported from its own file
 
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
@@ -17,11 +18,8 @@ import BillsPage from "./pages/BillsPage";
 import GoogleCallback from "./pages/GoogleCallback";
 
 import { incomeService } from "./services/incomeService";
-
 import { expenseService } from "./services/expenseService";
 import { savingsService } from "./services/savingsService";
-
-export const AppContext = createContext(null);
 
 // Valid pages a logged-in user can be on
 const VALID_APP_PAGES = [
@@ -33,8 +31,6 @@ const VALID_APP_PAGES = [
 export default function App() {
   const { isAuthenticated, loading: authLoading, logout, user: authUser, setUser } = useAuth();
 
-  // Start on "dashboard" unconditionally — the auth effect will
-  // restore the last saved page once auth resolves.
   const [page, setPage] = useState("dashboard");
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -42,15 +38,10 @@ export default function App() {
     return saved ? JSON.parse(saved) : false;
   });
 
-  // Real data from backend
   const [incomes, setIncomes] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [savingsGoals, setSavingsGoals] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
-
-  // Controls the initial full-screen loading overlay.
-  // Stays true until we know for certain whether the user is
-  // logged in or not (authLoading resolves).
   const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
 
   // ─────────────────────────────────────
@@ -67,7 +58,6 @@ export default function App() {
 
   // ─────────────────────────────────────
   // SAVE LAST PAGE TO LOCALSTORAGE
-  // Only save pages that belong to the authenticated app shell.
   // ─────────────────────────────────────
   useEffect(() => {
     if (VALID_APP_PAGES.includes(page)) {
@@ -87,7 +77,6 @@ export default function App() {
 
       if (token) {
         localStorage.setItem('token', token);
-        // Clean URL and reload so AuthContext picks up the token
         window.history.replaceState({}, document.title, '/');
         window.location.reload();
       } else if (error) {
@@ -102,35 +91,21 @@ export default function App() {
 
   // ─────────────────────────────────────
   // HANDLE AUTHENTICATION STATE
-  //
-  // This is the single source of truth for where the user ends up.
-  // It only runs after authLoading flips to false, meaning
-  // AuthContext has already read localStorage and (if a token
-  // existed) verified it with the backend. By that point the
-  // Axios interceptor is guaranteed to have a valid token to
-  // attach, so fetchAllData() will never race.
   // ─────────────────────────────────────
   useEffect(() => {
-    // Wait for AuthContext to finish its own async check
     if (authLoading) return;
 
     setInitialAuthCheckDone(true);
 
     if (isAuthenticated) {
-      // Restore the page the user was on before, or default to dashboard
       const savedPage = localStorage.getItem("lastPage");
       const restoredPage =
         savedPage && VALID_APP_PAGES.includes(savedPage)
           ? savedPage
           : "dashboard";
       setPage(restoredPage);
-
-      // Safe to fetch now — token is in localStorage and will be
-      // picked up by the Axios request interceptor
       fetchAllData();
     } else {
-      // No valid session — send to landing.
-      // Keep "auth" if they're mid-login so we don't yank the form.
       setPage((prev) => (prev === "auth" ? "auth" : "landing"));
       localStorage.removeItem("lastPage");
     }
@@ -139,9 +114,6 @@ export default function App() {
 
   // ─────────────────────────────────────
   // FETCH ALL DATA FROM BACKEND
-  //
-  // Not called until after auth resolves (see effect above),
-  // so the token is always present when this runs.
   // ─────────────────────────────────────
   const fetchAllData = async () => {
     setDataLoading(true);
@@ -216,10 +188,6 @@ export default function App() {
   // ─────────────────────────────────────
   // AUTH HANDLERS
   // ─────────────────────────────────────
-
-  // Called by AuthPage after a successful login/register.
-  // The useAuth isAuthenticated flag will flip, triggering the
-  // useEffect above which calls fetchAllData — no need to do it here.
   const handleLogin = () => {};
 
   const handleLogout = async () => {
@@ -231,7 +199,6 @@ export default function App() {
     localStorage.removeItem("lastPage");
   };
 
-  // Function to update user data from settings
   const handleUpdateUser = (updatedUser) => {
     setUser(updatedUser);
   };
@@ -266,8 +233,6 @@ export default function App() {
 
   // ─────────────────────────────────────
   // LOADING SCREEN
-  // Show this while AuthContext is verifying the token.
-  // Prevents flash of landing page on reload.
   // ─────────────────────────────────────
   if (authLoading || !initialAuthCheckDone) {
     return (
@@ -286,7 +251,6 @@ export default function App() {
   // PAGE RENDERING
   // ─────────────────────────────────────
   const renderPage = () => {
-    // Special case for Google callback
     if (page === "google-callback") {
       return <GoogleCallback />;
     }
@@ -299,25 +263,25 @@ export default function App() {
     }
 
     switch (page) {
-      case "dashboard": 
+      case "dashboard":
         return <Dashboard />;
-      case "expenses": 
+      case "expenses":
         return <ExpensesPage />;
-      case "income": 
+      case "income":
         return <IncomePage />;
-      case "savings": 
+      case "savings":
         return <SavingsPage />;
-      case "insights": 
+      case "insights":
         return <InsightsPage />;
       case "bills":
         return <BillsPage />;
-      case "afford": 
+      case "afford":
         return <AffordabilityTool />;
       case "budget":
         return <BudgetPage />;
-      case "settings": 
+      case "settings":
         return <SettingsPage onLogout={handleLogout} />;
-      default: 
+      default:
         return <Dashboard />;
     }
   };
@@ -344,11 +308,3 @@ export default function App() {
     </AppContext.Provider>
   );
 }
-
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error("useApp must be used within AppContext.Provider");
-  }
-  return context;
-};
