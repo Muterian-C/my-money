@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useApp } from "../App";
+import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import API from "../api/api";  // Use your existing API instance
