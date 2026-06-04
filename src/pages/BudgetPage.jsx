@@ -4,12 +4,27 @@ import { useApp } from "../context/AppContext";
 import { budgetService } from "../services/budgetService";
 import { expenseService } from "../services/expenseService";
 
+// IMPORTANT: These MUST match the expense categories exactly!
+const BUDGET_CATEGORIES = [
+  { id: "rent", label: "Rent", icon: "🏠", type: "fixed" },
+  { id: "transport", label: "Transport", icon: "🚗", type: "variable" },
+  { id: "food", label: "Food", icon: "🍔", type: "variable" },
+  { id: "internet", label: "Internet", icon: "🌐", type: "fixed" },
+  { id: "helb", label: "HELB", icon: "📚", type: "fixed" },
+  { id: "blacktax", label: "Black Tax", icon: "👨‍👩‍👧", type: "variable" },
+  { id: "savings", label: "Savings", icon: "💰", type: "fixed" },
+  { id: "utilities", label: "Utilities", icon: "💡", type: "fixed" },
+  { id: "emergencies", label: "Emergency", icon: "🚨", type: "variable" },
+  { id: "entertainment", label: "Entertainment", icon: "🎬", type: "variable" },
+  { id: "shopping", label: "Shopping", icon: "🛍️", type: "variable" },
+  { id: "health", label: "Health", icon: "🏥", type: "variable" },
+];
+
 export default function BudgetPage() {
   const { darkMode } = useApp();
   const [loading, setLoading] = useState(true);
   const [budgets, setBudgets] = useState([]);
   const [summary, setSummary] = useState(null);
-  const [categories, setCategories] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -35,13 +50,11 @@ export default function BudgetPage() {
     setLoading(true);
     setError(null);
     try {
-      const [summaryData, categoriesData, alertsData] = await Promise.all([
+      const [summaryData, alertsData] = await Promise.all([
         budgetService.getBudgetSummary(selectedMonth, selectedYear),
-        budgetService.getCategories(),
         budgetService.getBudgetAlerts(),
       ]);
       setSummary(summaryData);
-      setCategories(categoriesData);
       setAlerts(alertsData);
     } catch (err) {
       console.error("Failed to load budget data:", err);
@@ -59,10 +72,11 @@ export default function BudgetPage() {
 
     try {
       await budgetService.createBudget({
-        ...formData,
+        category: formData.category, // This is the category ID that matches expenses!
         amount: parseFloat(formData.amount),
         month: selectedMonth,
         year: selectedYear,
+        notes: formData.notes,
       });
       setSuccess("Budget added successfully!");
       setShowAddModal(false);
@@ -83,10 +97,11 @@ export default function BudgetPage() {
 
     try {
       await budgetService.updateBudget(editingBudget.id, {
-        ...formData,
+        category: formData.category,
         amount: parseFloat(formData.amount),
         month: selectedMonth,
         year: selectedYear,
+        notes: formData.notes,
       });
       setSuccess("Budget updated successfully!");
       setEditingBudget(null);
@@ -156,6 +171,16 @@ export default function BudgetPage() {
     }
   };
 
+  const getCategoryIcon = (categoryId) => {
+    const cat = BUDGET_CATEGORIES.find(c => c.id === categoryId);
+    return cat ? cat.icon : "📊";
+  };
+
+  const getCategoryLabel = (categoryId) => {
+    const cat = BUDGET_CATEGORIES.find(c => c.id === categoryId);
+    return cat ? cat.label : categoryId;
+  };
+
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -196,7 +221,7 @@ export default function BudgetPage() {
                   <span className="text-2xl">{alert.type === "exceeded" ? "⚠️" : "⚡"}</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {alert.category} Budget {alert.type === "exceeded" ? "Exceeded" : "Warning"}
+                      {getCategoryLabel(alert.category)} Budget {alert.type === "exceeded" ? "Exceeded" : "Warning"}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">{alert.message}</p>
                   </div>
@@ -299,9 +324,12 @@ export default function BudgetPage() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {category.category}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{getCategoryIcon(category.category)}</span>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {getCategoryLabel(category.category)}
+                      </h3>
+                    </div>
                     {category.notes && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{category.notes}</p>
                     )}
@@ -396,26 +424,21 @@ export default function BudgetPage() {
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Category *
                     </label>
-                    {categories.length > 0 ? (
-                      <select
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      >
-                        <option value="">Select a category</option>
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="e.g., Food & Dining"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
-                    )}
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">Select a category</option>
+                      {BUDGET_CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.icon} {cat.label} ({cat.type})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Categories must match your expense categories for accurate tracking.
+                    </p>
                   </div>
 
                   <div>
