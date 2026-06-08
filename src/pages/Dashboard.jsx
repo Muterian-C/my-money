@@ -3,18 +3,13 @@ import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { budgetService } from "../services/budgetService";
 import { billService } from "../services/billService";
+import ProgressiveTrendChart from "../components/ProgressiveTrendChart";
 import {
   PieChart,
   Pie,
   Cell,
   ResponsiveContainer,
   Tooltip,
-  Area,
-  ComposedChart,
-  XAxis,
-  YAxis,
-  Legend,
-  Line,
 } from "recharts";
 
 const fmt = (n) => `KES ${n.toLocaleString()}`;
@@ -62,20 +57,16 @@ export default function Dashboard() {
   } = useApp();
 
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState("spending");
   const [isLoading, setIsLoading] = useState(true);
   const [budgetSummary, setBudgetSummary] = useState(null);
   const [budgetStatus, setBudgetStatus] = useState({ onTrack: 0, warning: 0, exceeded: 0 });
   const [billsSummary, setBillsSummary] = useState(null);
-  const [monthlyTrend, setMonthlyTrend] = useState([]);
-  const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), 600);
     loadBudgetSummary();
     loadBillsSummary();
-    loadMonthlyTrend();
-  }, [expenses]);
+  }, []);
 
   const loadBudgetSummary = async () => {
     try {
@@ -103,87 +94,6 @@ export default function Dashboard() {
       setBillsSummary(summary);
     } catch (err) {
       console.error("Failed to load bills summary:", err);
-    }
-  };
-
-  // Calculate real monthly trend from expenses - handles partial data gracefully
-  const loadMonthlyTrend = () => {
-    const months = [];
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    
-    // Check if we have any expenses
-    if (expenses.length === 0) {
-      setHasData(false);
-      setMonthlyTrend([{ month: "No Data", income: 0, expenses: 0, savings: 0, isPlaceholder: true }]);
-      return;
-    }
-    
-    setHasData(true);
-    
-    // Get unique months from expenses
-    const expenseMonths = new Set();
-    expenses.forEach(exp => {
-      const date = new Date(exp.date);
-      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-      expenseMonths.add(key);
-    });
-    
-    // If we have less than 3 months of data, show what we have
-    const monthsToShow = Math.min(expenseMonths.size, 6);
-    
-    for (let i = monthsToShow - 1; i >= 0; i--) {
-      const targetDate = new Date(currentYear, currentMonth - i, 1);
-      const year = targetDate.getFullYear();
-      const month = targetDate.getMonth() + 1;
-      const monthName = targetDate.toLocaleDateString('en-US', { month: 'short' });
-      
-      // Calculate expenses for this month
-      const monthExpenses = expenses
-        .filter(exp => {
-          const expDate = new Date(exp.date);
-          return expDate.getMonth() + 1 === month && expDate.getFullYear() === year;
-        })
-        .reduce((sum, exp) => sum + exp.amount, 0);
-      
-      // For income, we need to estimate or show 0 if no data
-      // Since your backend doesn't store income per month historically, we'll show current month's income
-      // or project based on available data
-      let monthIncome = 0;
-      
-      if (i === 0) {
-        // Current month - use actual total income
-        monthIncome = totalIncome;
-      } else if (totalIncome > 0) {
-        // Past months - use average or current income as estimate
-        // This is a limitation; ideally you'd store income per month
-        monthIncome = totalIncome;
-      }
-      
-      const monthSavings = monthIncome - monthExpenses;
-      
-      months.push({
-        month: monthName,
-        income: monthIncome,
-        expenses: monthExpenses,
-        savings: monthSavings,
-        hasData: monthExpenses > 0
-      });
-    }
-    
-    // If no historical data, add a message
-    if (months.length === 0 || (months.length === 1 && months[0].expenses === 0)) {
-      setMonthlyTrend([{ 
-        month: "Start Tracking", 
-        income: totalIncome, 
-        expenses: totalExpenses, 
-        savings: balance,
-        isPlaceholder: false,
-        note: "Add expenses to see trends"
-      }]);
-    } else {
-      setMonthlyTrend(months);
     }
   };
 
@@ -236,14 +146,12 @@ export default function Dashboard() {
   if (spendingRatio > 90) alerts.push({ type: "danger", msg: `Spending at ${Math.round(spendingRatio)}% of income — critical.`, action: "Review budget" });
   if (savingsRate < 10) alerts.push({ type: "warn", msg: `Savings rate is ${savingsRate.toFixed(1)}% (recommended: 20%)`, action: "Increase savings" });
   
-  // Add budget alerts if any categories are exceeded
   if (budgetStatus.exceeded > 0) {
     alerts.push({ type: "danger", msg: `${budgetStatus.exceeded} budget categor${budgetStatus.exceeded > 1 ? 'ies are' : 'y is'} exceeded`, action: "View budgets" });
   } else if (budgetStatus.warning > 0) {
     alerts.push({ type: "warn", msg: `${budgetStatus.warning} budget categor${budgetStatus.warning > 1 ? 'ies are' : 'y is'} close to limit`, action: "Check budgets" });
   }
 
-  // Add bill alerts if there are upcoming bills
   if (billsSummary && billsSummary.upcoming_bills && billsSummary.upcoming_bills.length > 0) {
     alerts.push({ 
       type: "warn", 
@@ -255,8 +163,6 @@ export default function Dashboard() {
 
   const projectedSavings = balance * 1.1;
   const financialFreedomScore = Math.min(100, Math.round((balance / (totalExpenses * 3)) * 100));
-
-  // Add a friendly message for new users
   const isNewUser = expenses.length === 0;
 
   return (
@@ -677,81 +583,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Trend Analysis - Handles empty/partial data gracefully */}
+        {/* Trend Analysis - Progressive Chart */}
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 mb-6">
-          <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Financial Trajectory</h3>
-            <div className="flex gap-2">
-              {['spending', 'savings'].map((metric) => (
-                <button
-                  key={metric}
-                  onClick={() => setSelectedMetric(metric)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                    selectedMetric === metric 
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md' 
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {metric === 'spending' ? 'Income vs Expenses' : 'Savings Growth'}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {monthlyTrend.length === 0 || (monthlyTrend.length === 1 && monthlyTrend[0].expenses === 0 && monthlyTrend[0].income === 0) ? (
-            <div className="h-80 flex items-center justify-center flex-col">
-              <div className="text-5xl mb-4">📊</div>
-              <p className="text-gray-500 dark:text-gray-400 text-center">
-                {expenses.length === 0 
-                  ? "Add expenses to see your financial trends over time"
-                  : "Not enough data yet. Keep tracking your expenses for 2-3 months to see trends"}
-              </p>
-              <button
-                onClick={() => window.location.href = '/expenses'}
-                className="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600 transition-all"
-              >
-                Add Your First Expense →
-              </button>
-            </div>
-          ) : (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={monthlyTrend}>
-                  <defs>
-                    <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} />
-                  <YAxis hide />
-                  <Tooltip 
-                    formatter={(value, name) => [fmt(value), name]}
-                    contentStyle={{
-                      backgroundColor: 'rgba(255,255,255,0.95)',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      padding: '10px 14px',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                  {selectedMetric === 'spending' ? (
-                    <>
-                      <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2.5} fill="url(#incomeGradient)" />
-                      <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2.5} fill="url(#expenseGradient)" />
-                    </>
-                  ) : (
-                    <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={3} dot={{ fill: "#3b82f6", r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                  )}
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span>📈</span> Financial Trends
+          </h3>
+          <ProgressiveTrendChart expenses={expenses} totalIncome={totalIncome} />
         </div>
 
         {/* Motivational Quote */}
