@@ -9,8 +9,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend,  // ← Add this import
 } from "recharts";
-import { motion, AnimatePresence } from "framer-motion";
 
 const fmt = (n) => `KES ${Number(n).toLocaleString()}`;
 
@@ -42,9 +42,9 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
                              (newestDate.getMonth() - oldestDate.getMonth());
 
     const newAvailable = {
-      daily: daysDifference >= 7, // After 1 week, daily trends available
-      weekly: weeksDifference >= 2, // After 2 weeks, weekly trends available
-      monthly: monthsDifference >= 2, // After 2 months, monthly trends available
+      daily: daysDifference >= 7,
+      weekly: weeksDifference >= 2,
+      monthly: monthsDifference >= 2,
     };
     
     setAvailableTimeframes(newAvailable);
@@ -73,7 +73,6 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
 
     switch (timeframe) {
       case "daily":
-        // Last 7 days
         for (let i = 6; i >= 0; i--) {
           const date = new Date();
           date.setDate(date.getDate() - i);
@@ -89,7 +88,7 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
           data.push({
             name: dayName,
             expenses: dayExpenses,
-            income: totalIncome / 30, // Approximate daily income
+            income: totalIncome / 30,
             savings: (totalIncome / 30) - dayExpenses,
             fullDate: date,
           });
@@ -97,7 +96,6 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
         break;
 
       case "weekly":
-        // Last 4-6 weeks (show up to 8 weeks if available)
         const weeksToShow = Math.min(8, Math.ceil(expenses.length / 3) + 2);
         for (let i = weeksToShow - 1; i >= 0; i--) {
           const weekStart = new Date(now);
@@ -115,7 +113,7 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
           data.push({
             name: `Wk ${weeksToShow - i}`,
             expenses: weekExpenses,
-            income: totalIncome / 4, // Approximate weekly income
+            income: totalIncome / 4,
             savings: (totalIncome / 4) - weekExpenses,
             startDate: weekStart,
           });
@@ -123,7 +121,6 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
         break;
 
       case "monthly":
-        // Last 6 months
         const monthsToShow = 6;
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         
@@ -207,7 +204,7 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
 
   return (
     <div className="space-y-4">
-      {/* Timeframe Selector - Only shows when options become available */}
+      {/* Timeframe Selector */}
       {options.length > 1 && (
         <div className="flex justify-between items-center flex-wrap gap-3">
           <div className="flex gap-2">
@@ -314,7 +311,7 @@ export default function ProgressiveTrendChart({ expenses, totalIncome }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Info badge showing current mode */}
+      {/* Info badge */}
       <div className="text-center">
         <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-400">
           <span>📈</span>
