@@ -29,8 +29,8 @@ const CATEGORY_COLORS = {
   savings: "#14b8a6",
   utilities: "#f97316",
   emergencies: "#ec4899",
-  personalcare: "#e84393",  // Add new category
-  church: "#6c5ce7",        // Add new category
+  personalcare: "#e84393",
+  church: "#6c5ce7",
 };
 
 const CATEGORY_LABELS = {
@@ -43,8 +43,8 @@ const CATEGORY_LABELS = {
   savings: "Savings",
   utilities: "Utilities",
   emergencies: "Emergency",
-  personalcare: "Personal Care",  // Add new category
-  church: "Church/Tithe",         // Add new category
+  personalcare: "Personal Care",
+  church: "Church/Tithe",
 };
 
 export default function Dashboard() {
@@ -68,13 +68,14 @@ export default function Dashboard() {
   const [budgetStatus, setBudgetStatus] = useState({ onTrack: 0, warning: 0, exceeded: 0 });
   const [billsSummary, setBillsSummary] = useState(null);
   const [monthlyTrend, setMonthlyTrend] = useState([]);
+  const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), 600);
     loadBudgetSummary();
     loadBillsSummary();
     loadMonthlyTrend();
-  }, []);
+  }, [expenses]);
 
   const loadBudgetSummary = async () => {
     try {
@@ -105,20 +106,40 @@ export default function Dashboard() {
     }
   };
 
-  // Calculate real monthly trend from expenses
+  // Calculate real monthly trend from expenses - handles partial data gracefully
   const loadMonthlyTrend = () => {
     const months = [];
     const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
     
-    // Get last 6 months of data
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
+    // Check if we have any expenses
+    if (expenses.length === 0) {
+      setHasData(false);
+      setMonthlyTrend([{ month: "No Data", income: 0, expenses: 0, savings: 0, isPlaceholder: true }]);
+      return;
+    }
+    
+    setHasData(true);
+    
+    // Get unique months from expenses
+    const expenseMonths = new Set();
+    expenses.forEach(exp => {
+      const date = new Date(exp.date);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      expenseMonths.add(key);
+    });
+    
+    // If we have less than 3 months of data, show what we have
+    const monthsToShow = Math.min(expenseMonths.size, 6);
+    
+    for (let i = monthsToShow - 1; i >= 0; i--) {
+      const targetDate = new Date(currentYear, currentMonth - i, 1);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth() + 1;
+      const monthName = targetDate.toLocaleDateString('en-US', { month: 'short' });
       
-      // Calculate income for this month (from incomes data - you'll need to add incomes array to AppContext if not already)
-      // For now, using expenses data to calculate monthly totals
+      // Calculate expenses for this month
       const monthExpenses = expenses
         .filter(exp => {
           const expDate = new Date(exp.date);
@@ -126,19 +147,44 @@ export default function Dashboard() {
         })
         .reduce((sum, exp) => sum + exp.amount, 0);
       
-      // If you have income data per month in your AppContext, use that instead
-      // For now, we'll use a placeholder or you can pass incomes from AppContext
-      const monthIncome = totalIncome; // This is current month only, needs improvement
+      // For income, we need to estimate or show 0 if no data
+      // Since your backend doesn't store income per month historically, we'll show current month's income
+      // or project based on available data
+      let monthIncome = 0;
+      
+      if (i === 0) {
+        // Current month - use actual total income
+        monthIncome = totalIncome;
+      } else if (totalIncome > 0) {
+        // Past months - use average or current income as estimate
+        // This is a limitation; ideally you'd store income per month
+        monthIncome = totalIncome;
+      }
+      
+      const monthSavings = monthIncome - monthExpenses;
       
       months.push({
         month: monthName,
         income: monthIncome,
         expenses: monthExpenses,
-        savings: monthIncome - monthExpenses
+        savings: monthSavings,
+        hasData: monthExpenses > 0
       });
     }
     
-    setMonthlyTrend(months);
+    // If no historical data, add a message
+    if (months.length === 0 || (months.length === 1 && months[0].expenses === 0)) {
+      setMonthlyTrend([{ 
+        month: "Start Tracking", 
+        income: totalIncome, 
+        expenses: totalExpenses, 
+        savings: balance,
+        isPlaceholder: false,
+        note: "Add expenses to see trends"
+      }]);
+    } else {
+      setMonthlyTrend(months);
+    }
   };
 
   const [animatedValues, setAnimatedValues] = useState({
@@ -210,6 +256,9 @@ export default function Dashboard() {
   const projectedSavings = balance * 1.1;
   const financialFreedomScore = Math.min(100, Math.round((balance / (totalExpenses * 3)) * 100));
 
+  // Add a friendly message for new users
+  const isNewUser = expenses.length === 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-zinc-50 dark:from-slate-950 dark:via-gray-950 dark:to-zinc-950">
       
@@ -230,11 +279,11 @@ export default function Dashboard() {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div className="animate-fade-in">
               <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
-                Welcome back, {user?.name?.split(" ")[0] || "there"} 👋
+                {isNewUser ? "Welcome to PesaPlan! 👋" : `Welcome back, ${user?.name?.split(" ")[0] || "there"} 👋`}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
                 <span className="inline-block w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                Here's your financial snapshot
+                {isNewUser ? "Start by adding your first expense" : "Here's your financial snapshot"}
               </p>
             </div>
 
@@ -286,6 +335,35 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* New User Welcome Card */}
+        {isNewUser && (
+          <div className="mb-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl p-6 border border-emerald-200/50 dark:border-emerald-800/30">
+            <div className="flex items-center gap-4">
+              <div className="text-5xl">🎉</div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Welcome to PesaPlan!</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Start by adding your first expense or income. Your dashboard will populate with insights as you track your finances.
+                </p>
+                <div className="flex gap-3 mt-3">
+                  <button
+                    onClick={() => window.location.href = '/expenses'}
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600 transition-all"
+                  >
+                    Add Your First Expense →
+                  </button>
+                  <button
+                    onClick={() => window.location.href = '/income'}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-all"
+                  >
+                    Add Income Source →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Bills Summary Card */}
         {billsSummary && billsSummary.bill_count > 0 && (
@@ -599,7 +677,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Trend Analysis - NOW USING REAL DATA */}
+        {/* Trend Analysis - Handles empty/partial data gracefully */}
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 mb-6">
           <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Financial Trajectory</h3>
@@ -619,45 +697,61 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={monthlyTrend.length > 0 ? monthlyTrend : [
-                { month: "No data", income: 0, expenses: 0, savings: 0 }
-              ]}>
-                <defs>
-                  <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} />
-                <YAxis hide />
-                <Tooltip 
-                  formatter={(value, name) => [fmt(value), name]}
-                  contentStyle={{
-                    backgroundColor: 'rgba(255,255,255,0.95)',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '12px',
-                    padding: '10px 14px',
-                    fontSize: '12px'
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                {selectedMetric === 'spending' ? (
-                  <>
-                    <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2.5} fill="url(#incomeGradient)" />
-                    <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2.5} fill="url(#expenseGradient)" />
-                  </>
-                ) : (
-                  <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={3} dot={{ fill: "#3b82f6", r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
+          
+          {monthlyTrend.length === 0 || (monthlyTrend.length === 1 && monthlyTrend[0].expenses === 0 && monthlyTrend[0].income === 0) ? (
+            <div className="h-80 flex items-center justify-center flex-col">
+              <div className="text-5xl mb-4">📊</div>
+              <p className="text-gray-500 dark:text-gray-400 text-center">
+                {expenses.length === 0 
+                  ? "Add expenses to see your financial trends over time"
+                  : "Not enough data yet. Keep tracking your expenses for 2-3 months to see trends"}
+              </p>
+              <button
+                onClick={() => window.location.href = '/expenses'}
+                className="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600 transition-all"
+              >
+                Add Your First Expense →
+              </button>
+            </div>
+          ) : (
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={monthlyTrend}>
+                  <defs>
+                    <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} />
+                  <YAxis hide />
+                  <Tooltip 
+                    formatter={(value, name) => [fmt(value), name]}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      padding: '10px 14px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                  {selectedMetric === 'spending' ? (
+                    <>
+                      <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2.5} fill="url(#incomeGradient)" />
+                      <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2.5} fill="url(#expenseGradient)" />
+                    </>
+                  ) : (
+                    <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={3} dot={{ fill: "#3b82f6", r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  )}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
         {/* Motivational Quote */}
