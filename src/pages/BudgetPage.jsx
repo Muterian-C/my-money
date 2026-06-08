@@ -18,6 +18,8 @@ const BUDGET_CATEGORIES = [
   { id: "entertainment", label: "Entertainment", icon: "🎬", type: "variable" },
   { id: "shopping", label: "Shopping", icon: "🛍️", type: "variable" },
   { id: "health", label: "Health", icon: "🏥", type: "variable" },
+   { id: "personalcare", label: "Personal Care", icon: "💇", type: "variable" },
+  { id: "church", label: "Church/Tithe", icon: "⛪", type: "variable" },
 ];
 
 export default function BudgetPage() {
