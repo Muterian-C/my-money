@@ -19,6 +19,8 @@ const CATEGORIES = [
   { id: "entertainment", label: "Entertainment", icon: "🎬", type: "variable", color: "#a855f7" },
   { id: "shopping", label: "Shopping", icon: "🛍️", type: "variable", color: "#06b6d4" },
   { id: "health", label: "Health", icon: "🏥", type: "variable", color: "#14b8a6" },
+   { id: "personalcare", label: "Personal Care", icon: "💇", type: "variable" },
+  { id: "church", label: "Church/Tithe", icon: "⛪", type: "variable" },
 ];
 
 const FILTERS = [
