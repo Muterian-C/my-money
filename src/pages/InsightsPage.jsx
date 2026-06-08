@@ -29,6 +29,57 @@ export default function InsightsPage() {
 
   const [animatedScore, setAnimatedScore] = useState(0);
   const [selectedTimeframe, setSelectedTimeframe] = useState("week");
+  const [realSpendingTrend, setRealSpendingTrend] = useState([]);
+  const [realWeeklyData, setRealWeeklyData] = useState([]);
+
+  // Calculate real spending trend from actual expenses
+  useEffect(() => {
+    // Get last 7 days of expenses
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      // Sum expenses for this day
+      const dayTotal = expenses
+        .filter(exp => {
+          const expDate = new Date(exp.date);
+          return expDate.toDateString() === date.toDateString();
+        })
+        .reduce((sum, exp) => sum + exp.amount, 0);
+      
+      last7Days.push({ day: dayName, amount: dayTotal });
+    }
+    setRealSpendingTrend(last7Days);
+
+    // Calculate weekly data for last 4 weeks
+    const weeks = [];
+    const today = new Date();
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - (i * 7));
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      
+      const weekExpenses = expenses
+        .filter(exp => {
+          const expDate = new Date(exp.date);
+          return expDate >= weekStart && expDate <= weekEnd;
+        })
+        .reduce((sum, exp) => sum + exp.amount, 0);
+      
+      const weekIncome = totalIncome / 4; // Approximate weekly income
+      
+      weeks.push({
+        name: `Week ${4 - i}`,
+        spending: weekExpenses,
+        income: weekIncome,
+        savings: weekIncome - weekExpenses
+      });
+    }
+    setRealWeeklyData(weeks);
+  }, [expenses, totalIncome]);
 
   // Animate health score
   useEffect(() => {
@@ -48,7 +99,7 @@ export default function InsightsPage() {
     return () => clearInterval(interval);
   }, [healthScore]);
 
-  // Generate insights based on data
+  // Generate insights based on data (same as before)
   const insights = [];
   
   if (savingsRate < 10) {
@@ -116,23 +167,6 @@ export default function InsightsPage() {
       icon: "🌟",
     });
   }
-
-  const spendingTrend = [
-    { day: "Mon", amount: 1200 },
-    { day: "Tue", amount: 800 },
-    { day: "Wed", amount: 1500 },
-    { day: "Thu", amount: 600 },
-    { day: "Fri", amount: 2000 },
-    { day: "Sat", amount: 2500 },
-    { day: "Sun", amount: 900 },
-  ];
-
-  const weeklyData = [
-    { name: "Week 1", spending: 8500, income: 20000 },
-    { name: "Week 2", spending: 9200, income: 20000 },
-    { name: "Week 3", spending: 7800, income: 20000 },
-    { name: "Week 4", spending: totalExpenses, income: totalIncome },
-  ];
 
   const healthColor = healthScore >= 70 ? "#10b981" : healthScore >= 45 ? "#f59e0b" : "#ef4444";
   const healthLabel = healthScore >= 70 ? "Excellent" : healthScore >= 45 ? "Fair" : "Poor";
@@ -226,7 +260,7 @@ export default function InsightsPage() {
           />
         </div>
 
-        {/* Spending Trend Chart */}
+        {/* Spending Trend Chart - NOW USING REAL DATA */}
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-800/50 shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-gray-900 dark:text-white">Spending Trends</h3>
@@ -248,7 +282,7 @@ export default function InsightsPage() {
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={selectedTimeframe === 'week' ? spendingTrend : weeklyData}>
+              <ComposedChart data={selectedTimeframe === 'week' ? realSpendingTrend : realWeeklyData}>
                 <XAxis dataKey={selectedTimeframe === 'week' ? 'day' : 'name'} stroke="#9ca3af" fontSize={12} />
                 <YAxis hide />
                 <Tooltip 
