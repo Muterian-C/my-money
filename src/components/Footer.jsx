@@ -3,6 +3,10 @@ import { useState } from "react";
 export default function Footer() {
   const [currentYear] = useState(new Date().getFullYear());
   
+  const handleNavigation = (path) => {
+    window.location.href = path;
+  };
+  
   return (
     <footer className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-t border-gray-200/50 dark:border-gray-800/50 mt-12">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -10,7 +14,7 @@ export default function Footer() {
           
           {/* Brand Column */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleNavigation('/')}>
               <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-bold">P</span>
               </div>
@@ -28,24 +32,24 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Quick Links</h3>
             <ul className="space-y-2 text-xs">
               <li>
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                <button onClick={() => handleNavigation('/about')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
                   About Us
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
-                  Privacy Policy
-                </a>
+                <button onClick={() => handleNavigation('/features')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                  Features
+                </button>
               </li>
               <li>
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
-                  Terms of Service
-                </a>
+                <button onClick={() => handleNavigation('/pricing')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                  Pricing
+                </button>
               </li>
               <li>
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
-                  Contact Support
-                </a>
+                <button onClick={() => handleNavigation('/auth')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                  Sign Up
+                </button>
               </li>
             </ul>
           </div>
@@ -111,10 +115,6 @@ export default function Footer() {
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             Version 2.0.0 | Empowering financial freedom across Kenya, Uganda, Tanzania, Nigeria & beyond
           </p>
-          <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
-          </div>
-          <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">  
-          </div>
         </div>
       </div>
     </footer>
