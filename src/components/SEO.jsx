@@ -1,77 +1,67 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 
-export default function SEO({ 
-  title, 
-  description, 
-  keywords, 
-  image, 
-  type = "website",
-  noindex = false,
-  publishedTime,
-  author = "PesaPlan"
-}) {
-  const location = useLocation();
-  const currentUrl = `https://my-money-ra6z.onrender.com${location.pathname}`;
-  
+export default function SEO({ title, description, keywords, image, type = "website", noindex = false }) {
   useEffect(() => {
     // Set page title
     const fullTitle = title ? `${title} | PesaPlan` : "PesaPlan - Smart Financial Management for Africa";
     document.title = fullTitle;
     
-    // Update meta tags
-    const metaTags = {
-      'description': description || "Take control of your finances with PesaPlan. Track expenses, manage budgets, pay bills, and achieve savings goals. Free forever!",
-      'keywords': keywords || "personal finance, budgeting app, expense tracker, savings goals, African finance, money management",
-      'author': author,
-    };
+    // Update meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', description || "Take control of your finances with PesaPlan. Track expenses, manage budgets, pay bills, and achieve savings goals. Free forever!");
     
-    for (const [name, content] of Object.entries(metaTags)) {
-      let meta = document.querySelector(`meta[name="${name}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', name);
-        document.head.appendChild(meta);
+    // Update meta keywords
+    if (keywords) {
+      let metaKeywords = document.querySelector('meta[name="keywords"]');
+      if (!metaKeywords) {
+        metaKeywords = document.createElement('meta');
+        metaKeywords.setAttribute('name', 'keywords');
+        document.head.appendChild(metaKeywords);
       }
-      meta.setAttribute('content', content);
+      metaKeywords.setAttribute('content', keywords);
     }
     
-    // Update Open Graph tags
-    const ogTags = {
-      'og:title': fullTitle,
-      'og:description': description || "Take control of your finances with PesaPlan. Track expenses, manage budgets, and achieve financial freedom.",
-      'og:url': currentUrl,
-      'og:type': type,
-      'og:image': image || "https://my-money-ra6z.onrender.com/og-image.png",
-      'og:site_name': "PesaPlan",
-    };
-    
-    for (const [property, content] of Object.entries(ogTags)) {
-      let meta = document.querySelector(`meta[property="${property}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
+    // Update Open Graph title
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    if (!ogTitle) {
+      ogTitle = document.createElement('meta');
+      ogTitle.setAttribute('property', 'og:title');
+      document.head.appendChild(ogTitle);
     }
+    ogTitle.setAttribute('content', fullTitle);
     
-    // Update Twitter Card tags
-    const twitterTags = {
-      'twitter:card': 'summary_large_image',
-      'twitter:title': fullTitle,
-      'twitter:description': description || "Take control of your finances with PesaPlan. Track expenses, manage budgets, and achieve financial freedom.",
-      'twitter:image': image || "https://my-money-ra6z.onrender.com/twitter-image.png",
-    };
+    // Update Open Graph description
+    let ogDescription = document.querySelector('meta[property="og:description"]');
+    if (!ogDescription) {
+      ogDescription = document.createElement('meta');
+      ogDescription.setAttribute('property', 'og:description');
+      document.head.appendChild(ogDescription);
+    }
+    ogDescription.setAttribute('content', description || "Take control of your finances with PesaPlan.");
     
-    for (const [name, content] of Object.entries(twitterTags)) {
-      let meta = document.querySelector(`meta[name="${name}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', name);
-        document.head.appendChild(meta);
+    // Update Open Graph type
+    let ogType = document.querySelector('meta[property="og:type"]');
+    if (!ogType) {
+      ogType = document.createElement('meta');
+      ogType.setAttribute('property', 'og:type');
+      document.head.appendChild(ogType);
+    }
+    ogType.setAttribute('content', type);
+    
+    // Update Open Graph image
+    if (image) {
+      let ogImage = document.querySelector('meta[property="og:image"]');
+      if (!ogImage) {
+        ogImage = document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImage);
       }
-      meta.setAttribute('content', content);
+      ogImage.setAttribute('content', image);
     }
     
     // Handle noindex for private pages
@@ -83,27 +73,11 @@ export default function SEO({
     }
     robots.setAttribute('content', noindex ? 'noindex, nofollow' : 'index, follow');
     
-    // Update canonical URL
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute('href', currentUrl);
-    
-    // Add published time for articles
-    if (publishedTime && type === 'article') {
-      let articleMeta = document.querySelector('meta[property="article:published_time"]');
-      if (!articleMeta) {
-        articleMeta = document.createElement('meta');
-        articleMeta.setAttribute('property', 'article:published_time');
-        document.head.appendChild(articleMeta);
-      }
-      articleMeta.setAttribute('content', publishedTime);
-    }
-    
-  }, [title, description, keywords, image, type, noindex, currentUrl, author, publishedTime]);
+    // Clean up on component unmount (optional - reset to defaults)
+    return () => {
+      // You can reset to default values if needed
+    };
+  }, [title, description, keywords, image, type, noindex]);
   
   return null;
 }
