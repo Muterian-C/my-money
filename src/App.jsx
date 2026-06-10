@@ -16,6 +16,9 @@ import BudgetPage from "./pages/BudgetPage";
 import NavBar from "./components/NavBar";
 import BillsPage from "./pages/BillsPage";
 import GoogleCallback from "./pages/GoogleCallback";
+import About from "./pages/About";
+import Features from "./pages/Features";
+import Pricing from "./pages/Pricing";
 
 import { incomeService } from "./services/incomeService";
 import { expenseService } from "./services/expenseService";
