@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SEO from "../components/SEO";
 
 export default function LandingPage({ onGetStarted }) {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -85,7 +86,7 @@ export default function LandingPage({ onGetStarted }) {
     const interval = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000); // Change every 5 seconds
-    return () => clearInterval(interval);
+     () => clearInterval(interval);
   }, [testimonials.length]);
 
   const nextTestimonial = () => {
@@ -140,6 +141,15 @@ export default function LandingPage({ onGetStarted }) {
   ];
 
   return (
+
+    <>
+      <SEO 
+        title="Smart Financial Management for Africa"
+        description="Take control of your finances with PesaPlan. Track expenses, manage budgets, pay bills, and achieve savings goals. Used by 4,200+ Africans. 100% free forever!"
+        keywords="personal finance, budgeting, expense tracker, savings, African finance, money management, Kenya, Uganda, Tanzania, Nigeria, Ghana, HELB, black tax"
+        type="website"
+        image="https://my-money-ra6z.onrender.com/og-image.png"
+      />
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 overflow-x-hidden">
       
       {/* Animated Background */}
