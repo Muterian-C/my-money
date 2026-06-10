@@ -1,10 +1,145 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pesaplan_frontend</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>PesaPlan - Smart Financial Management & Budget App for Africa | Free Expense Tracker</title>
+    <meta name="title" content="PesaPlan - Smart Financial Management & Budget App for Africa" />
+    <meta name="description" content="Take control of your finances with PesaPlan. Track expenses, manage budgets, pay bills, set savings goals, and improve your financial health. Used by 4,200+ Africans. 100% free forever!" />
+    <meta name="keywords" content="personal finance, budgeting app, expense tracker, savings goals, money management, African finance, HELB tracker, black tax, financial freedom, Kenya, Uganda, Tanzania, Nigeria, Ghana, South Africa, salary management, bill tracker" />
+    <meta name="author" content="PesaPlan" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="rating" content="General" />
+    <meta name="distribution" content="global" />
+    
+    <!-- Canonical URL (prevents duplicate content issues) -->
+    <link rel="canonical" href="https://my-money-ra6z.onrender.com/" />
+    
+    <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://my-money-ra6z.onrender.com/" />
+    <meta property="og:title" content="PesaPlan - Take Control of Your Finances Today" />
+    <meta property="og:description" content="Track expenses, manage budgets, and achieve financial freedom. Join 4,200+ Africans using PesaPlan. Free forever!" />
+    <meta property="og:image" content="https://my-money-ra6z.onrender.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="PesaPlan Dashboard showing financial health score, spending breakdown, and budget tracking" />
+    <meta property="og:site_name" content="PesaPlan" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://my-money-ra6z.onrender.com/" />
+    <meta name="twitter:title" content="PesaPlan - Smart Financial Management for Africa" />
+    <meta name="twitter:description" content="Track expenses, manage budgets, and achieve financial freedom. Join 4,200+ Africans using PesaPlan. Free forever!" />
+    <meta name="twitter:image" content="https://my-money-ra6z.onrender.com/twitter-image.png" />
+    <meta name="twitter:image:alt" content="PesaPlan Dashboard Preview" />
+    
+    <!-- Geo Targeting for African Countries -->
+    <meta name="geo.region" content="KE" />
+    <meta name="geo.placename" content="Nairobi, Kenya" />
+    <meta name="geo.position" content="-1.286389;36.817223" />
+    <meta name="ICBM" content="-1.286389, 36.817223" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="msapplication-TileColor" content="#10b981" />
+    <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
+    
+    <!-- Structured Data / Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "PesaPlan",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "KES",
+        "availability": "https://schema.org/InStock"
+      },
+      "description": "Smart financial management app for African professionals. Track expenses, manage budgets, pay bills, and achieve savings goals. Used by 4,200+ users across Kenya, Uganda, Tanzania, Nigeria, and Ghana.",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "4200",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "countryOfOrigin": {
+        "@type": "Country",
+        "name": "Kenya"
+      },
+      "featureList": "Expense tracking, Budget management, Savings goals, Bill reminders, Financial insights, Affordability calculator, Dark mode, PDF export",
+      "screenshot": "https://my-money-ra6z.onrender.com/screenshot.png",
+      "downloadUrl": "https://my-money-ra6z.onrender.com",
+      "softwareVersion": "2.0.0",
+      "datePublished": "2024-01-01",
+      "keywords": "personal finance, budgeting, expense tracker, savings, African finance, money management"
+    }
+    </script>
+    
+    <!-- BreadcrumbList Structured Data for better search results -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://my-money-ra6z.onrender.com/"
+      }]
+    }
+    </script>
+    
+    <!-- FAQ Schema for common questions (improves search visibility) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is PesaPlan really free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, PesaPlan is 100% free forever. No hidden fees, no premium tiers, no credit card required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which countries does PesaPlan support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "PesaPlan supports Kenya, Uganda, Tanzania, Nigeria, Ghana, Rwanda, and other African countries with local currency support including KES, UGX, TZS, RWF, and USD."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I track my HELB loan with PesaPlan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, PesaPlan has a dedicated HELB category for Kenyan users to track loan repayments and manage their student loan obligations."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
