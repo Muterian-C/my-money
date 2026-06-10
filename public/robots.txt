@@ -1,0 +1,27 @@
+# Allow all search engine crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://my-money-ra6z.onrender.com/sitemap.xml
+
+# Disallow private/authenticated pages (noindex these)
+Disallow: /dashboard
+Disallow: /expenses
+Disallow: /income
+Disallow: /savings
+Disallow: /bills
+Disallow: /budget
+Disallow: /insights
+Disallow: /settings
+Disallow: /afford
+Disallow: /api/*
+
+# Crawl delay to be respectful to servers
+Crawl-delay: 5
+
+# Specify clean param to avoid duplicate content
+Clean-param: utm_source&utm_medium&utm_campaign
+
+# Host directive (helps Google choose the preferred version)
+Host: https://my-money-ra6z.onrender.com
