@@ -25,7 +25,7 @@ import { savingsService } from "./services/savingsService";
 const VALID_APP_PAGES = [
   "dashboard", "expenses", "income",
   "savings", "bills", "insights", "afford", "settings",
-  "budget", "google-callback",
+  "budget", "google-callback", "about", "features", "pricing",
 ];
 
 export default function App() {
