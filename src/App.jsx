@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
-import Footer from "./components/Footer";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { AppContext } from "./context/AppContext";
 
+// Layout Components
+import NavBar from "./components/NavBar";
+import Footer from "./components/Footer";
+
+// Page Components
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
@@ -13,7 +18,6 @@ import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AffordabilityTool from "./pages/AffordabilityTool";
 import BudgetPage from "./pages/BudgetPage";
-import NavBar from "./components/NavBar";
 import BillsPage from "./pages/BillsPage";
 import GoogleCallback from "./pages/GoogleCallback";
 import About from "./pages/About";
@@ -24,20 +28,25 @@ import { incomeService } from "./services/incomeService";
 import { expenseService } from "./services/expenseService";
 import { savingsService } from "./services/savingsService";
 
-// Valid pages - both public and authenticated
-const VALID_APP_PAGES = [
-  "dashboard", "expenses", "income",
-  "savings", "bills", "insights", "afford", "settings",
-  "budget", "google-callback",
-];
+// Protected Route Component
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
 
-// Public pages (no authentication needed)
-const PUBLIC_PAGES = ["about", "features", "pricing", "landing", "auth"];
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  if (loading) return null;
+  return isAuthenticated ? children : null;
+}
 
 export default function App() {
   const { isAuthenticated, loading: authLoading, logout, user: authUser, setUser } = useAuth();
-
-  const [page, setPage] = useState("landing");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
@@ -66,7 +75,7 @@ export default function App() {
   // HANDLE GOOGLE OAUTH CALLBACK URL
   // ─────────────────────────────────────
   useEffect(() => {
-    const path = window.location.pathname;
+    const path = location.pathname;
     if (path === '/auth/google/success') {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
@@ -77,48 +86,24 @@ export default function App() {
         window.history.replaceState({}, document.title, '/');
         window.location.reload();
       } else if (error) {
-        window.history.replaceState({}, document.title, '/');
-        setPage('auth');
+        navigate('/auth');
       } else {
-        window.history.replaceState({}, document.title, '/');
-        setPage('auth');
+        navigate('/auth');
       }
     }
-  }, []);
+  }, [location, navigate]);
 
   // ─────────────────────────────────────
-  // HANDLE AUTHENTICATION STATE & PAGE RESTORATION
-  // ─────────────────────────────────────
-  useEffect(() => {
-    if (authLoading) return;
-
-    setInitialAuthCheckDone(true);
-
-    if (isAuthenticated) {
-      // Restore last page from localStorage (only valid app pages)
-      const savedPage = localStorage.getItem("lastPage");
-      const restoredPage = savedPage && VALID_APP_PAGES.includes(savedPage)
-        ? savedPage
-        : "dashboard";
-      setPage(restoredPage);
-      fetchAllData();
-    } else {
-      // For public pages, keep the current page if it's public, otherwise go to landing
-      setPage((prev) => {
-        if (PUBLIC_PAGES.includes(prev)) return prev;
-        return "landing";
-      });
-    }
-  }, [isAuthenticated, authLoading]);
-
-  // ─────────────────────────────────────
-  // SAVE LAST PAGE TO LOCALSTORAGE (only for authenticated app pages)
+  // INITIAL AUTH CHECK & DATA FETCH
   // ─────────────────────────────────────
   useEffect(() => {
-    if (isAuthenticated && VALID_APP_PAGES.includes(page)) {
-      localStorage.setItem("lastPage", page);
+    if (!authLoading) {
+      setInitialAuthCheckDone(true);
+      if (isAuthenticated) {
+        fetchAllData();
+      }
     }
-  }, [page, isAuthenticated]);
+  }, [authLoading, isAuthenticated]);
 
   // ─────────────────────────────────────
   // FETCH ALL DATA FROM BACKEND
@@ -192,15 +177,12 @@ export default function App() {
   // ─────────────────────────────────────
   // AUTH HANDLERS
   // ─────────────────────────────────────
-  const handleLogin = () => {};
-
   const handleLogout = async () => {
     await logout();
     setIncomes([]);
     setExpenses([]);
     setSavingsGoals([]);
-    setPage("landing");
-    localStorage.removeItem("lastPage");
+    navigate('/');
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -211,8 +193,6 @@ export default function App() {
   // CONTEXT VALUE
   // ─────────────────────────────────────
   const ctx = {
-    page,
-    setPage,
     darkMode,
     setDarkMode,
     incomes,
@@ -250,60 +230,76 @@ export default function App() {
   }
 
   // ─────────────────────────────────────
-  // PAGE RENDERING
+  // SHOULD SHOW NAVBAR & FOOTER
   // ─────────────────────────────────────
-  const renderPage = () => {
-    // Handle public pages first (no authentication needed)
-    if (page === "about") return <About />;
-    if (page === "features") return <Features />;
-    if (page === "pricing") return <Pricing />;
-    if (page === "google-callback") return <GoogleCallback />;
-
-    // Handle unauthenticated users
-    if (!isAuthenticated) {
-      if (page === "auth") {
-        return <AuthPage onLogin={handleLogin} />;
-      }
-      return <LandingPage onGetStarted={() => setPage("auth")} />;
-    }
-
-    // Handle authenticated pages
-    switch (page) {
-      case "dashboard":
-        return <Dashboard />;
-      case "expenses":
-        return <ExpensesPage />;
-      case "income":
-        return <IncomePage />;
-      case "savings":
-        return <SavingsPage />;
-      case "insights":
-        return <InsightsPage />;
-      case "bills":
-        return <BillsPage />;
-      case "afford":
-        return <AffordabilityTool />;
-      case "budget":
-        return <BudgetPage />;
-      case "settings":
-        return <SettingsPage onLogout={handleLogout} />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
-  // Show Navbar only for authenticated users OR public pages (optional)
-  const showNavbar = isAuthenticated || ["about", "features", "pricing"].includes(page);
-  const showFooter = !isAuthenticated || ["about", "features", "pricing"].includes(page);
+  const publicPages = ['/', '/auth', '/about', '/features', '/pricing'];
+  const isPublicPage = publicPages.includes(location.pathname);
+  const showNavbar = isAuthenticated || (isPublicPage && location.pathname !== '/auth');
+  const showFooter = true; // Show footer everywhere
 
   return (
     <AppContext.Provider value={ctx}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 transition-all duration-300">
         {showNavbar && <NavBar />}
 
-        <main className={isAuthenticated ? "pt-16 pb-20" : ""}>
+        <main className={(isAuthenticated || location.pathname === '/dashboard') ? "pt-16 pb-20" : ""}>
           <div className="max-w-7xl mx-auto">
-            {renderPage()}
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/features" element={<Features />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/auth/google/success" element={<GoogleCallback />} />
+
+              {/* Protected Routes (require authentication) */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/expenses" element={
+                <ProtectedRoute>
+                  <ExpensesPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/income" element={
+                <ProtectedRoute>
+                  <IncomePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/savings" element={
+                <ProtectedRoute>
+                  <SavingsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/insights" element={
+                <ProtectedRoute>
+                  <InsightsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/bills" element={
+                <ProtectedRoute>
+                  <BillsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/afford" element={
+                <ProtectedRoute>
+                  <AffordabilityTool />
+                </ProtectedRoute>
+              } />
+              <Route path="/budget" element={
+                <ProtectedRoute>
+                  <BudgetPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <SettingsPage onLogout={handleLogout} />
+                </ProtectedRoute>
+              } />
+            </Routes>
           </div>
         </main>
 

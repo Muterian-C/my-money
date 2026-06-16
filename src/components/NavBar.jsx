@@ -1,21 +1,24 @@
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
-import { useApp } from "../context/AppContext"; // ✅ fixed — was "../App" which caused circular import
+import { useApp } from "../context/AppContext";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
-  { id: "dashboard", icon: "🏠", iconActive: "🏠", label: "Home" },
-  { id: "expenses", icon: "💸", iconActive: "💸", label: "Spend" },
-  { id: "income", icon: "💰", iconActive: "💰", label: "Earn" },
-  { id: "bills", icon: "📋", iconActive: "📋", label: "Bills" },
-  { id: "savings", icon: "🎯", iconActive: "🎯", label: "Save" },
-  { id: "budget", icon: "📋", iconActive: "📋", label: "Budget" },
-  { id: "insights", icon: "📊", iconActive: "📊", label: "Insights" },
+  { id: "dashboard", path: "/dashboard", icon: "🏠", label: "Home" },
+  { id: "expenses", path: "/expenses", icon: "💸", label: "Spend" },
+  { id: "income", path: "/income", icon: "💰", label: "Earn" },
+  { id: "bills", path: "/bills", icon: "📋", label: "Bills" },
+  { id: "savings", path: "/savings", icon: "🎯", label: "Save" },
+  { id: "budget", path: "/budget", icon: "📊", label: "Budget" },
+  { id: "insights", path: "/insights", icon: "📈", label: "Insights" },
 ];
 
 export default function NavBar() {
   const { user } = useAuth();
-  const { page, setPage, darkMode, setDarkMode } = useApp();
+  const { darkMode, setDarkMode } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -51,6 +54,13 @@ export default function NavBar() {
     return "Good evening";
   };
 
+  // Check if a nav item is active
+  const isActive = (path) => location.pathname === path;
+
+  // Check if we're on a public page (hide bottom nav)
+  const publicPages = ['/', '/auth', '/about', '/features', '/pricing'];
+  const isPublicPage = publicPages.includes(location.pathname);
+
   return (
     <>
       {/* Top Navbar */}
@@ -63,11 +73,12 @@ export default function NavBar() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
 
-            {/* Brand Logo */}
+            {/* Brand Logo - Navigates to home */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => navigate('/')}
             >
               <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white text-sm font-bold">P</span>
@@ -83,7 +94,7 @@ export default function NavBar() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setPage("afford")}
+                onClick={() => navigate('/afford')}
                 className="relative group w-10 h-10 rounded-full flex items-center justify-center text-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300"
                 title="Can I Afford This?"
               >
@@ -148,7 +159,7 @@ export default function NavBar() {
                       <div className="p-2">
                         <button
                           onClick={() => {
-                            setPage("settings");
+                            navigate('/settings');
                             setShowProfileMenu(false);
                           }}
                           className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -158,7 +169,7 @@ export default function NavBar() {
 
                         <button
                           onClick={() => {
-                            setPage("settings");
+                            navigate('/settings');
                             setShowProfileMenu(false);
                           }}
                           className="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
@@ -181,62 +192,64 @@ export default function NavBar() {
         </div>
       </nav>
 
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 pb-[env(safe-area-inset-bottom)]">
-          <div className="flex items-center justify-around px-4 py-2">
-            {navItems.map((item) => {
-              const active = page === item.id;
-              return (
-                <motion.button
-                  key={item.id}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setPage(item.id)}
-                  className="relative flex-1 flex flex-col items-center py-2 transition-all duration-300 group"
-                >
-                  {active && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute -top-2 w-12 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  )}
-
-                  <div
-                    className={`w-12 h-10 flex items-center justify-center text-xl rounded-xl transition-all duration-300 ${
-                      active
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
-                    }`}
+      {/* Bottom Navigation Bar - Only show on authenticated pages */}
+      {!isPublicPage && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50">
+          <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 pb-[env(safe-area-inset-bottom)]">
+            <div className="flex items-center justify-around px-4 py-2">
+              {navItems.map((item) => {
+                const active = isActive(item.path);
+                return (
+                  <motion.button
+                    key={item.id}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate(item.path)}
+                    className="relative flex-1 flex flex-col items-center py-2 transition-all duration-300 group"
                   >
-                    {active ? item.iconActive : item.icon}
-                  </div>
+                    {active && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute -top-2 w-12 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
 
-                  <span
-                    className={`text-xs font-medium transition-all duration-300 ${
-                      active
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                    <div
+                      className={`w-12 h-10 flex items-center justify-center text-xl rounded-xl transition-all duration-300 ${
+                        active
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
+                      }`}
+                    >
+                      {item.icon}
+                    </div>
 
-                  {/* Tooltip on hover */}
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    {item.label}
-                  </div>
-                </motion.button>
-              );
-            })}
+                    <span
+                      className={`text-xs font-medium transition-all duration-300 ${
+                        active
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+
+                    {/* Tooltip on hover */}
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      {item.label}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* Spacers to prevent content from hiding under fixed navbars */}
       <div className="h-16" />
-      <div className="h-20" />
+      {!isPublicPage && <div className="h-20" />}
     </>
   );
 }

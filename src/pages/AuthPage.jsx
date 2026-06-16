@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import GoogleLogin from '../components/GoogleLogin';
 
-export default function AuthPage({ onLogin }) {
+export default function AuthPage() {
   const { login, register } = useAuth();
+  const navigate = useNavigate();
 
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({
@@ -38,11 +40,11 @@ export default function AuthPage({ onLogin }) {
       if (mode === "login") {
         result = await login(form.email, form.password);
       } else {
-        result = await register(form.name, form.email, form.password);
+        result = await register(form.name, form.email, form.password, parseInt(form.payDay));
       }
 
       if (result.success) {
-        onLogin();
+        navigate('/dashboard');
       } else {
         setError(result.message || "Something went wrong.");
       }
@@ -257,30 +259,17 @@ export default function AuthPage({ onLogin }) {
             <div className="flex-1 border-t border-gray-200 dark:border-gray-800" />
           </div>
 
-          {/* DEMO BUTTON - Enhanced with hover effect */}
-          
-
-{/* // In your AuthPage component, add this where you want the button: */}
-
-<div className="relative my-4">
-  <div className="absolute inset-0 flex items-center">
-    <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
-  </div>
-  <div className="relative flex justify-center text-sm">
-    <span className="px-2 bg-white dark:bg-gray-950 text-gray-500">Or continue with</span>
-  </div>
-</div>
-
-<GoogleLogin 
-  onSuccess={(user) => {
-    console.log('Google login success:', user);
-    onLogin(); // Call your existing onLogin handler
-  }}
-  onError={(error) => {
-    console.error('Google login error:', error);
-    setError(error);
-  }}
-/>
+          {/* Google Login Button */}
+          <GoogleLogin 
+            onSuccess={(user) => {
+              console.log('Google login success:', user);
+              navigate('/dashboard');
+            }}
+            onError={(error) => {
+              console.error('Google login error:', error);
+              setError(error);
+            }}
+          />
 
           {/* SWITCH MODE LINK */}
           {mode === "login" && (

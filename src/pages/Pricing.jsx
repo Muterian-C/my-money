@@ -1,8 +1,13 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import SEO from "../components/SEO";
 
 export default function Pricing() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -62,10 +67,10 @@ export default function Pricing() {
                   <span className="text-gray-500"> / month</span>
                 </div>
                 <button
-                  onClick={() => window.location.href = '/auth'}
+                  onClick={() => navigate(isAuthenticated ? '/dashboard' : '/auth')}
                   className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
                 >
-                  Get Started →
+                  {isAuthenticated ? "Go to Dashboard →" : "Get Started →"}
                 </button>
               </div>
 

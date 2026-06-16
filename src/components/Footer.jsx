@@ -1,11 +1,9 @@
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Footer() {
+  const { isAuthenticated } = useAuth();
   const [currentYear] = useState(new Date().getFullYear());
-  
-  const handleNavigation = (path) => {
-    window.location.href = path;
-  };
   
   return (
     <footer className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-t border-gray-200/50 dark:border-gray-800/50 mt-12">
@@ -14,14 +12,14 @@ export default function Footer() {
           
           {/* Brand Column */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleNavigation('/')}>
+            <a href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-bold">P</span>
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
                 Pesa<span className="text-emerald-500">Plan</span>
               </span>
-            </div>
+            </a>
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               Take control of your finances with PesaPlan. Built for African professionals, freelancers, and students.
             </p>
@@ -32,24 +30,30 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Quick Links</h3>
             <ul className="space-y-2 text-xs">
               <li>
-                <button onClick={() => handleNavigation('/about')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                <a href="/about" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
                   About Us
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => handleNavigation('/features')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                <a href="/features" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
                   Features
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => handleNavigation('/pricing')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                <a href="/pricing" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
                   Pricing
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => handleNavigation('/auth')} className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
-                  Sign Up
-                </button>
+                {isAuthenticated ? (
+                  <a href="/dashboard" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                    Dashboard
+                  </a>
+                ) : (
+                  <a href="/auth" className="text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                    Sign Up
+                  </a>
+                )}
               </li>
             </ul>
           </div>

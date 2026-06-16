@@ -1,61 +1,74 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import SEO from "../components/SEO";
 
-export default function LandingPage({ onGetStarted }) {
+export default function LandingPage() {
+  const navigate = useNavigate();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [isVisible, setIsVisible] = useState({});
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
+  // Realistic testimonials for African users
   const testimonials = [
     {
-      name: "Brian M.",
+      name: "Brian Mwangi",
       location: "Nairobi, Kenya",
       role: "Software Developer",
       image: "👨‍💻",
-      text: "PesaPlan helped me realize I was wasting 40% of my salary on transport and food. Now I save KES 8,000 every month!",
+      text: "Before PesaPlan, I was always broke by the 20th. Now I track my spending and save KES 8,000 every month. My HELB repayment is no longer a struggle!",
       savings: "KES 48,000 saved in 6 months",
       rating: 5,
       icon: "💚"
     },
     {
-      name: "Sarah W.",
+      name: "Sarah Atieno",
       location: "Kampala, Uganda",
-      role: "Teacher",
+      role: "Primary School Teacher",
       image: "👩‍🏫",
-      text: "The survival days counter changed my life. I can finally plan my month without anxiety about running out before payday.",
-      savings: "Reduced debt by KES 35,000",
+      text: "Teaching in Uganda isn't easy financially. The survival days counter showed me I was overspending on transport. I've reduced my debt by UGX 1.2M and can finally breathe.",
+      savings: "Reduced debt by UGX 1.2M",
       rating: 5,
       icon: "🌟"
     },
     {
-      name: "James O.",
+      name: "James Okafor",
       location: "Lagos, Nigeria",
-      role: "Freelance Designer",
+      role: "Freelance Graphic Designer",
       image: "🎨",
-      text: "Black tax was eating my income until PesaPlan helped me budget for it properly. Now I help family AND save every month.",
-      savings: "Saving 25% monthly",
+      text: "Black tax was eating my income until I used PesaPlan to budget for family support separately. Now I help my parents AND save 25% of my earnings every month.",
+      savings: "Saving ₦25,000 monthly",
       rating: 5,
       icon: "🎯"
     },
     {
-      name: "Mary A.",
+      name: "Mary Akinyi",
       location: "Dar es Salaam, Tanzania",
-      role: "Recent Graduate",
+      role: "Recent University Graduate",
       image: "🎓",
-      text: "As a fresh grad, managing HELB and rent seemed impossible. PesaPlan made it simple. I've never felt this in control.",
-      savings: "Paid off 6 months of HELB early",
+      text: "Fresh out of campus with a loan to repay, managing my first salary was overwhelming. PesaPlan helped me budget for rent, food, and saving for my brother's school fees.",
+      savings: "Saved TSh 400,000 in 3 months",
       rating: 5,
       icon: "📚"
     },
     {
-      name: "Peter K.",
+      name: "Peter Amoako",
       location: "Accra, Ghana",
       role: "Small Business Owner",
       image: "👔",
-      text: "The 'Can I Afford This?' feature stops me from impulse buying. My business profits are up 40% since using PesaPlan.",
+      text: "My phone parts business was doing well, but I had no idea where the money went. PesaPlan helped me track business expenses separately from personal - my profits are up 40%!",
       savings: "Increased profits by 40%",
       rating: 5,
       icon: "🚀"
+    },
+    {
+      name: "Grace Wanjiru",
+      location: "Nakuru, Kenya",
+      role: "Nurse",
+      image: "👩‍⚕️",
+      text: "With PesaPlan, I finally understand where my salary goes. The 'Can I Afford This?' feature saved me from impulse buying a phone I didn't need. Now I'm saving for my wedding!",
+      savings: "Saved KES 60,000 for wedding",
+      rating: 5,
+      icon: "💒"
     }
   ];
 
@@ -103,7 +116,7 @@ export default function LandingPage({ onGetStarted }) {
       bg: "from-blue-500/10 to-blue-600/5",
       border: "border-blue-200 dark:border-blue-800/30",
       title: "Survival Days Counter",
-      desc: "Know exactly how many days your money lasts before payday.",
+      desc: "Know exactly how many days your money lasts before your next payday.",
       color: "text-blue-600 dark:text-blue-400",
     },
     {
@@ -111,7 +124,7 @@ export default function LandingPage({ onGetStarted }) {
       bg: "from-rose-500/10 to-rose-600/5",
       border: "border-rose-200 dark:border-rose-800/30",
       title: "Overspending Alerts",
-      desc: "Get warned before you overspend on essentials or obligations.",
+      desc: "Get warned before you overspend on essentials or family obligations.",
       color: "text-rose-600 dark:text-rose-400",
     },
     {
@@ -119,7 +132,7 @@ export default function LandingPage({ onGetStarted }) {
       bg: "from-emerald-500/10 to-emerald-600/5",
       border: "border-emerald-200 dark:border-emerald-800/30",
       title: "Savings Goals",
-      desc: "Track emergency funds, travel, gadgets and more.",
+      desc: "Track emergency funds, travel, school fees, gadgets and more.",
       color: "text-emerald-600 dark:text-emerald-400",
     },
     {
@@ -127,7 +140,7 @@ export default function LandingPage({ onGetStarted }) {
       bg: "from-amber-500/10 to-amber-600/5",
       border: "border-amber-200 dark:border-amber-800/30",
       title: "Can I Afford This?",
-      desc: "Instantly see the impact of purchases on your budget.",
+      desc: "Instantly see the impact of purchases on your family's budget.",
       color: "text-amber-600 dark:text-amber-400",
     },
     {
@@ -139,6 +152,11 @@ export default function LandingPage({ onGetStarted }) {
       color: "text-purple-600 dark:text-purple-400",
     },
   ];
+
+  // Navigation handler for "Get Started" buttons
+  const handleGetStarted = () => {
+    navigate('/auth');
+  };
 
   return (
     <>
@@ -170,7 +188,7 @@ export default function LandingPage({ onGetStarted }) {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              🇰🇪 Built for African Professionals
+              🇰🇪 🇺🇬 🇹🇿 🇳🇬 🇬🇭 Built for African Professionals
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight bg-gradient-to-r from-gray-900 via-gray-800 to-gray-600 dark:from-white dark:via-gray-200 dark:to-gray-400 bg-clip-text text-transparent">
@@ -179,14 +197,13 @@ export default function LandingPage({ onGetStarted }) {
             </h1>
 
             <p className="mt-6 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-              PesaPlan helps interns, grads, freelancers and low-income earners manage
-              rent, HELB, black tax and daily spending — so your money lasts the whole month.
+              PesaPlan helps Africans manage rent, HELB, black tax, daily spending and family obligations — so your money lasts the whole month.
             </p>
 
             {/* CTA Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
               <button
-                onClick={onGetStarted}
+                onClick={handleGetStarted}
                 className="group relative px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95"
               >
                 <span className="relative z-10">Start for Free →</span>
@@ -210,9 +227,9 @@ export default function LandingPage({ onGetStarted }) {
             </div>
 
             <div className="group bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 text-center border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent mb-2">4.2K+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">active users</div>
-              <div className="mt-3 text-xs text-gray-500">Growing rapidly in East Africa</div>
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent mb-2">4,200+</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">active users across Africa</div>
+              <div className="mt-3 text-xs text-gray-500">Growing rapidly in East & West Africa</div>
             </div>
 
             <div className="group bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 text-center border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
@@ -370,7 +387,7 @@ export default function LandingPage({ onGetStarted }) {
               </p>
               
               <button
-                onClick={onGetStarted}
+                onClick={handleGetStarted}
                 className="group relative px-8 py-3 bg-white text-gray-900 font-semibold rounded-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95 overflow-hidden"
               >
                 <span className="relative z-10">Create Free Account →</span>
@@ -388,7 +405,7 @@ export default function LandingPage({ onGetStarted }) {
         <footer className="relative border-t border-gray-200/50 dark:border-gray-800/50 py-8">
           <div className="max-w-6xl mx-auto px-4 text-center text-xs text-gray-500 dark:text-gray-400">
             <p>© 2024 PesaPlan. Empowering African financial freedom.</p>
-            <p className="mt-2">Made with 💚 for interns, grads, and hustlers</p>
+            <p className="mt-2">Made with 💚 for interns, graduates, and hustlers across Africa</p>
           </div>
         </footer>
 

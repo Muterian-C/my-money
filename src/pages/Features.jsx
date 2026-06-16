@@ -1,8 +1,13 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import SEO from "../components/SEO";
 
 export default function Features() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -144,13 +149,13 @@ export default function Features() {
             </div>
           </div>
 
-          {/* CTA */}
+          {/* CTA - Conditional based on auth status */}
           <div className="mt-8 text-center">
             <button
-              onClick={() => window.location.href = '/auth'}
+              onClick={() => navigate(isAuthenticated ? '/dashboard' : '/auth')}
               className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
             >
-              Start Using PesaPlan Free →
+              {isAuthenticated ? "Go to Dashboard →" : "Start Using PesaPlan Free →"}
             </button>
           </div>
         </div>

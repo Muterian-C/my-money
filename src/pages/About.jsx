@@ -1,8 +1,13 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import SEO from "../components/SEO";
 
 export default function About() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -121,16 +126,16 @@ export default function About() {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* CTA - Conditional based on auth status */}
           <div className="text-center bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl p-8 border border-emerald-200/50 dark:border-emerald-800/30">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-              Ready to take control?
+              {isAuthenticated ? "Continue managing your finances" : "Ready to take control?"}
             </h3>
             <button
-              onClick={() => window.location.href = '/auth'}
+              onClick={() => navigate(isAuthenticated ? '/dashboard' : '/auth')}
               className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
             >
-              Start Your Journey →
+              {isAuthenticated ? "Go to Dashboard →" : "Start Your Journey →"}
             </button>
           </div>
         </div>
