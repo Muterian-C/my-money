@@ -74,24 +74,24 @@ export default function App() {
   // ─────────────────────────────────────
   // HANDLE GOOGLE OAUTH CALLBACK URL
   // ─────────────────────────────────────
-  useEffect(() => {
-    const path = location.pathname;
-    if (path === '/auth/google/success') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const error = urlParams.get('error');
-
-      if (token) {
-        localStorage.setItem('token', token);
-        window.history.replaceState({}, document.title, '/');
-        window.location.reload();
-      } else if (error) {
-        navigate('/auth');
-      } else {
-        navigate('/auth');
-      }
-    }
-  }, [location, navigate]);
+//  useEffect(() => {
+//    const path = location.pathname;
+//    if (path === '/auth/google/success') {
+//      const urlParams = new URLSearchParams(window.location.search);
+//      const token = urlParams.get('token');
+//      const error = urlParams.get('error');
+//
+//      if (token) {
+//        localStorage.setItem('token', token);
+//        window.history.replaceState({}, document.title, '/');
+//        window.location.reload();
+//      } else if (error) {
+//        navigate('/auth');
+//      } else {
+//        navigate('/auth');
+//      }
+//    }
+//  }, [location, navigate]);
 
   // ─────────────────────────────────────
   // INITIAL AUTH CHECK & DATA FETCH
