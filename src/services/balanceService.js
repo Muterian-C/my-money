@@ -1,4 +1,4 @@
-import API from '../api/axios';
+import API from '../api/api';
 
 export const balanceService = {
   // Adjust balance
