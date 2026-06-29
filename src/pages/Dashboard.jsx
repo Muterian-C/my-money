@@ -66,7 +66,6 @@ export default function Dashboard() {
   const [showReconcileModal, setShowReconcileModal] = useState(false);
   // const [showAdjustModal, setShowAdjustModal] = useState(false);
 
-
   useEffect(() => {
     setTimeout(() => setIsLoading(false), 600);
     loadBudgetSummary();
@@ -206,7 +205,9 @@ export default function Dashboard() {
                   {daysToPayday} days to payday
                 </div>
               </div>
-               {/* <button
+              {/* 
+                Balance Adjustment Modal - Commented out
+                <button
                   onClick={() => setShowAdjustModal(true)}
                   className="relative group flex items-center gap-2 text-sm px-4 py-2 bg-white dark:bg-gray-800 rounded-xl font-semibold shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:scale-105 transition-all"
                   title="Adjust Balance"
@@ -216,8 +217,7 @@ export default function Dashboard() {
                     Manual Balance Adjustment
                   </span>
                 </button>
-              
-                {/* Add the modal */}
+                
                 <BalanceAdjustmentModal
                   isOpen={showAdjustModal}
                   onClose={() => setShowAdjustModal(false)}
@@ -225,26 +225,28 @@ export default function Dashboard() {
                     refetchData(); // Refresh all data
                   }}
                   currentBalance={balance}
-                /> */}
+                />
+              */}
 
               <button
-                  onClick={() => setShowReconcileModal(true)}
-                  className="relative group flex items-center gap-2 text-sm px-4 py-2 bg-white dark:bg-gray-800 rounded-xl font-semibold shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:scale-105 transition-all"
-                  title="Reconcile Balance"
-                >
-                  <span>🔄</span> Reconcile
-                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    Match balance to what you have
-                  </span>
-                </button>
+                onClick={() => setShowReconcileModal(true)}
+                className="relative group flex items-center gap-2 text-sm px-4 py-2 bg-white dark:bg-gray-800 rounded-xl font-semibold shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:scale-105 transition-all"
+                title="Reconcile Balance"
+              >
+                <span>🔄</span> Reconcile
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Match balance to what you have
+                </span>
+              </button>
                 
-                // Add the modal
-                <BalanceReconciliationModal
-                  isOpen={showReconcileModal}
-                  onClose={() => setShowReconcileModal(false)}
-                  onSuccess={() => refetchData()}
-                  currentBalance={balance}
-                />
+              {/* Add the modal */}
+              <BalanceReconciliationModal
+                isOpen={showReconcileModal}
+                onClose={() => setShowReconcileModal(false)}
+                onSuccess={() => refetchData()}
+                currentBalance={balance}
+              />
+              
               <div className="relative group">
                 <div className="relative text-sm px-4 py-2 bg-white dark:bg-gray-800 rounded-xl font-semibold shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all">
                   <span>📅</span> {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
