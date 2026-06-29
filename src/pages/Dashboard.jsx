@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { budgetService } from "../services/budgetService";
 import { billService } from "../services/billService";
 import ProgressiveTrendChart from "../components/ProgressiveTrendChart";
-import BalanceAdjustmentModal from '../components/BalanceAdjustmentModal';
+// import BalanceAdjustmentModal from '../components/BalanceAdjustmentModal';
+import BalanceReconciliationModal from '../components/BalanceReconciliationModal';
 import {
   PieChart,
   Pie,
@@ -62,7 +63,8 @@ export default function Dashboard() {
   const [budgetSummary, setBudgetSummary] = useState(null);
   const [budgetStatus, setBudgetStatus] = useState({ onTrack: 0, warning: 0, exceeded: 0 });
   const [billsSummary, setBillsSummary] = useState(null);
-  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [showReconcileModal, setShowReconcileModal] = useState(false);
+  // const [showAdjustModal, setShowAdjustModal] = useState(false);
 
 
   useEffect(() => {
@@ -204,7 +206,7 @@ export default function Dashboard() {
                   {daysToPayday} days to payday
                 </div>
               </div>
-               <button
+               {/* <button
                   onClick={() => setShowAdjustModal(true)}
                   className="relative group flex items-center gap-2 text-sm px-4 py-2 bg-white dark:bg-gray-800 rounded-xl font-semibold shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:scale-105 transition-all"
                   title="Adjust Balance"
@@ -222,6 +224,25 @@ export default function Dashboard() {
                   onSuccess={() => {
                     refetchData(); // Refresh all data
                   }}
+                  currentBalance={balance}
+                /> */}
+
+              <button
+                  onClick={() => setShowReconcileModal(true)}
+                  className="relative group flex items-center gap-2 text-sm px-4 py-2 bg-white dark:bg-gray-800 rounded-xl font-semibold shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:scale-105 transition-all"
+                  title="Reconcile Balance"
+                >
+                  <span>🔄</span> Reconcile
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    Match balance to what you have
+                  </span>
+                </button>
+                
+                // Add the modal
+                <BalanceReconciliationModal
+                  isOpen={showReconcileModal}
+                  onClose={() => setShowReconcileModal(false)}
+                  onSuccess={() => refetchData()}
                   currentBalance={balance}
                 />
               <div className="relative group">
