@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://pesaplan-backend.onrender.com/api";
+
 const API = axios.create({
-  baseURL: "https://muterian.pythonanywhere.com/api",  // Your PythonAnywhere URL
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },

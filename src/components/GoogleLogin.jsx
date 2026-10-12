@@ -1,7 +1,7 @@
 export default function GoogleLogin({ onError }) {
   const handleGoogleLogin = () => {
-    // Just redirect the whole page to the backend
-    window.location.href = 'https://muterian.pythonanywhere.com/api/auth/google';
+    const apiBase = import.meta.env.VITE_API_URL || 'https://pesaplan-backend.onrender.com/api';
+    window.location.href = `${apiBase}/auth/google`;
   };
 
   return (
